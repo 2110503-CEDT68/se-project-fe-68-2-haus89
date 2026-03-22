@@ -23,6 +23,8 @@ export default function LoginPage() {
         
         localStorage.setItem("token", data.token);
         
+        window.dispatchEvent(new Event('authChange'));
+        
         const redirectUrl = searchParams.get("redirect");
         
         if (redirectUrl) {

@@ -17,12 +17,20 @@ export default function TopMenu() {
     checkToken();
 
     window.addEventListener('storage', checkToken);
-    return () => window.removeEventListener('storage', checkToken);
+    window.addEventListener('authChange', checkToken);
+    
+    return () => {
+      window.removeEventListener('storage', checkToken);
+      window.removeEventListener('authChange', checkToken);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
+    
+    window.dispatchEvent(new Event('authChange'));
+    
     alert('Logged out successfully');
     window.location.href = '/'; 
   };
