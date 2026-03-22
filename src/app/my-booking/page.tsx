@@ -12,25 +12,31 @@ export default function MyBookingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchMyBooking = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/login");
-          return;
-        }
-
-        const data = await getMyBooking(token);
-        setBooking(data.data?.booking || data.data);
-      } catch (err: any) {
-        setError("คุณยังไม่มีการจองคิวในระบบครับ");
-      } finally {
-        setLoading(false);
+  const fetchMyBooking = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
       }
+
+      const data = await getMyBooking(token);
+      setBooking(data.data?.booking || data.data);
+      setError("");
+    } catch (err: any) {
+      setError("คุณยังไม่มีการจองคิวในระบบครับ");
+      setBooking(null);
+    }
+  };
+
+  useEffect(() => {
+    const loadBooking = async () => {
+      setLoading(true);
+      await fetchMyBooking();
+      setLoading(false);
     };
 
-    fetchMyBooking();
+    loadBooking();
   }, [router]);
 
   return (
@@ -46,7 +52,7 @@ export default function MyBookingPage() {
         {loading ? (
           <div className="text-center text-gray-500 text-xl font-bold mt-20">กำลังโหลดข้อมูล...</div>
         ) : booking ? (
-          <BookingCard booking={booking} />
+          <BookingCard booking={booking} onBookingUpdate={fetchMyBooking} />
         ) : (
           <div className="bg-white p-10 rounded-xl shadow-md border border-gray-100 text-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">You don't have any appointments yet.</h2>

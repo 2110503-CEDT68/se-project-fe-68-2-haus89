@@ -1,16 +1,21 @@
 'use client'
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Dialog } from "@mui/material";
 import getDentists from "../../libs/getDentists";
+import BookingForm from "../../components/BookingForm";
 
 export default function DentistsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   const [dentists, setDentists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedDentist, setSelectedDentist] = useState<any>(null);
+  const [showBookingForm, setShowBookingForm] = useState(false);
 
   useEffect(() => {
       const fetchDentists = async () => {
@@ -31,14 +36,33 @@ export default function DentistsPage() {
 
   useEffect(() => {
     const pendingBookingId = localStorage.getItem("pendingBooking");
-    if (pendingBookingId) {
-      const token = localStorage.getItem("token");
-      if (token) {
+    if (pendingBookingId && dentists.length > 0) {
+      const dentist = dentists.find(d => d._id === pendingBookingId);
+      if (dentist) {
+        setSelectedDentist(dentist);
+        setShowBookingForm(true);
         localStorage.removeItem("pendingBooking");
-        alert(`Booking dentist ID: ${pendingBookingId} (In developing)`);
       }
     }
-  }, []);
+  }, [dentists]);
+
+  const handleBookingClick = (dentist: any) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      localStorage.setItem("pendingBooking", dentist._id);
+      router.push("/login?redirect=/dentists");
+    } else {
+      setSelectedDentist(dentist);
+      setShowBookingForm(true);
+    }
+  };
+
+  const handleBookingSuccess = () => {
+    setShowBookingForm(false);
+    setSelectedDentist(null);
+    alert("Booking created successfully! Check your appointments.");
+    router.push("/my-booking");
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -71,15 +95,7 @@ export default function DentistsPage() {
                 </div>
                 
                 <button 
-                  onClick={() => {
-                    const token = localStorage.getItem("token");
-                    if (!token) {
-                      localStorage.setItem("pendingBooking", dentist._id);
-                      router.push("/login?redirect=/dentists");
-                    } else {
-                      alert(`In developing`);
-                    }
-                  }}
+                  onClick={() => handleBookingClick(dentist)}
                   className="w-full bg-blue-50 text-blue-700 font-bold py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
                 >
                   Book Appointment
@@ -94,8 +110,31 @@ export default function DentistsPage() {
             )}
           </div>
         )}
-
       </div>
+
+      <Dialog
+        open={showBookingForm && !!selectedDentist}
+        onClose={() => {
+          setShowBookingForm(false);
+          setSelectedDentist(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        {selectedDentist && (
+          <div className="p-6">
+            <BookingForm
+              dentistId={selectedDentist._id}
+              dentistName={selectedDentist.name}
+              onSuccess={handleBookingSuccess}
+              onCancel={() => {
+                setShowBookingForm(false);
+                setSelectedDentist(null);
+              }}
+            />
+          </div>
+        )}
+      </Dialog>
     </main>
   );
 }
