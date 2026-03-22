@@ -1,13 +1,14 @@
 'use client'
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { TextField, Button } from "@mui/material";
 import Link from "next/link";
 import userLogin from "../../libs/userLogin"; 
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,8 +22,15 @@ export default function LoginPage() {
         const data = await userLogin(email, password);
         
         localStorage.setItem("token", data.token);
-        alert("Login Successful! เข้าสู่ระบบสำเร็จ");
-        router.push("/"); 
+        
+        const redirectUrl = searchParams.get("redirect");
+        
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else {
+          alert("Login Successful! เข้าสู่ระบบสำเร็จ");
+          router.push("/");
+        }
       } catch (err: any) {
         setError(err.message || "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
       }

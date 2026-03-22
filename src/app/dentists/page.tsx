@@ -15,10 +15,7 @@ export default function DentistsPage() {
   useEffect(() => {
       const fetchDentists = async () => {
         try {
-          const token = localStorage.getItem("token");
-          if (!token) { return; }
-  
-          const data = await getDentists(token); 
+          const data = await getDentists(); 
           
           const dentistsArray = data.data?.dentists || data.data || [];
           setDentists(dentistsArray);
@@ -31,6 +28,17 @@ export default function DentistsPage() {
 
     fetchDentists();
   }, [router]);
+
+  useEffect(() => {
+    const pendingBookingId = localStorage.getItem("pendingBooking");
+    if (pendingBookingId) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        localStorage.removeItem("pendingBooking");
+        alert(`Booking dentist ID: ${pendingBookingId} (In developing)`);
+      }
+    }
+  }, []);
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -63,7 +71,15 @@ export default function DentistsPage() {
                 </div>
                 
                 <button 
-                  onClick={() => alert(`In developing`)}
+                  onClick={() => {
+                    const token = localStorage.getItem("token");
+                    if (!token) {
+                      localStorage.setItem("pendingBooking", dentist._id);
+                      router.push("/login?redirect=/dentists");
+                    } else {
+                      alert(`In developing`);
+                    }
+                  }}
                   className="w-full bg-blue-50 text-blue-700 font-bold py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
                 >
                   Book Appointment
