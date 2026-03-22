@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { TextField, Button } from "@mui/material";
 import Link from "next/link";
 import userLogin from "../../libs/userLogin"; 
+import getMe from "../../libs/getMe";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +23,15 @@ export default function LoginPage() {
         const data = await userLogin(email, password);
         
         localStorage.setItem("token", data.token);
+
+        // Fetch user info to get role
+        try {
+          const meData = await getMe(data.token);
+          const role = meData.data?.role || meData.role || 'user';
+          localStorage.setItem("role", role);
+        } catch {
+          localStorage.setItem("role", "user");
+        }
         
         window.dispatchEvent(new Event('authChange'));
         

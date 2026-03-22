@@ -7,27 +7,32 @@ import { useRouter } from 'next/navigation';
 export default function TopMenu() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const checkToken = () => {
+    const checkAuth = () => {
       const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
       setIsLoggedIn(!!token);
+      setIsAdmin(role === 'admin');
     };
     
-    checkToken();
+    checkAuth();
 
-    window.addEventListener('storage', checkToken);
-    window.addEventListener('authChange', checkToken);
+    window.addEventListener('storage', checkAuth);
+    window.addEventListener('authChange', checkAuth);
     
     return () => {
-      window.removeEventListener('storage', checkToken);
-      window.removeEventListener('authChange', checkToken);
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('authChange', checkAuth);
     };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('role');
     setIsLoggedIn(false);
+    setIsAdmin(false);
     
     window.dispatchEvent(new Event('authChange'));
     
@@ -56,6 +61,11 @@ export default function TopMenu() {
                 <Link href="/my-booking" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
                   My Booking
                 </Link>
+                {isAdmin && (
+                  <Link href="/admin/dashboard" className="text-amber-600 hover:text-amber-700 font-bold transition-colors">
+                    Dashboard
+                  </Link>
+                )}
                 <button 
                   onClick={handleLogout} 
                   className="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition-colors text-sm"
