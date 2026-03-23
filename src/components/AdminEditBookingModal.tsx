@@ -11,7 +11,10 @@ import {
   MenuItem,
   CircularProgress,
 } from '@mui/material';
-import dayjs from 'dayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import getDentistAvailability, { AvailableSlot } from '../libs/getDentistAvailability';
 
 interface EditBookingModalProps {
@@ -30,6 +33,7 @@ export default function AdminEditBookingModal({
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [filterDate, setFilterDate] = useState<Dayjs | null>(null);
   const [status, setStatus] = useState('confirmed');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -41,6 +45,7 @@ export default function AdminEditBookingModal({
       setNotes(booking.notes || '');
       setError('');
       setSelectedSlot(null);
+      setFilterDate(null);
       fetchSlots();
     }
   }, [booking, open]);
@@ -104,6 +109,11 @@ export default function AdminEditBookingModal({
   );
 
   const sortedDates = Object.keys(groupedSlots).sort();
+  const displayedDates = filterDate
+    ? sortedDates.filter((d) => d === filterDate.format("YYYY-MM-DD"))
+    : sortedDates;
+
+  const availableDateSet = new Set(sortedDates);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -170,10 +180,42 @@ export default function AdminEditBookingModal({
                 <p className="text-gray-500 text-sm font-medium">No available slots</p>
               </div>
             ) : (
-              <div className="max-h-48 overflow-y-auto space-y-3 pr-1 pl-4">
-                {sortedDates.map((dateKey) => (
+              <>
+                {/* Date Filter Calendar */}
+                <div className="mb-4 pl-2">
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <div className="flex items-center gap-4">
+                      <DatePicker
+                        label="Filter by date"
+                        value={filterDate}
+                        onChange={(newDate) => setFilterDate(newDate)}
+                        shouldDisableDate={(date) =>
+                          !availableDateSet.has(date.format("YYYY-MM-DD"))
+                        }
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            sx: { maxWidth: 220 },
+                          },
+                        }}
+                      />
+                      {filterDate && (
+                        <button
+                          type="button"
+                          onClick={() => setFilterDate(null)}
+                          className="text-xs text-blue-600 font-bold hover:underline"
+                        >
+                          Show all
+                        </button>
+                      )}
+                    </div>
+                  </LocalizationProvider>
+                </div>
+
+                <div className="max-h-56 overflow-y-auto space-y-4 pr-2 pl-2 custom-scrollbar">
+                  {displayedDates.map((dateKey) => (
                   <div key={dateKey}>
-                    <p className="text-xs font-bold text-blue-800 mb-1 sticky top-0 bg-white py-1">
+                    <p className="text-sm font-semibold text-gray-700 mb-2 sticky top-0 bg-white py-1.5 z-10 border-b border-gray-100">
                       📅 {dayjs(dateKey).format("ddd, MMM D, YYYY")}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
@@ -189,14 +231,14 @@ export default function AdminEditBookingModal({
                             key={`${dateKey}-${idx}`}
                             type="button"
                             onClick={() => setSelectedSlot(slot)}
-                            className={`p-2 rounded-lg border-2 text-left transition-all ${
+                            className={`px-3 py-2.5 rounded-xl border-2 text-center transition-all duration-200 ${
                               isSelected
-                                ? "border-blue-500 bg-blue-50 text-blue-800 ring-2 ring-blue-200"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50"
+                                ? "border-blue-600 bg-blue-50 text-blue-800 shadow-sm"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-gray-50 hover:shadow-sm"
                             }`}
                           >
-                            <span className="text-xs font-bold">
-                              🕐 {slot.startTime} - {slot.endTime}
+                            <span className="text-[13px] font-semibold flex items-center justify-center gap-1.5">
+                              🕒 {slot.startTime} - {slot.endTime}
                             </span>
                           </button>
                         );
@@ -204,7 +246,8 @@ export default function AdminEditBookingModal({
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
           </div>
 
