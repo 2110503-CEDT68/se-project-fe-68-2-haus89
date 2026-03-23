@@ -170,7 +170,7 @@ export default function AdminEditBookingModal({
                 <p className="text-gray-500 text-sm font-medium">No available slots</p>
               </div>
             ) : (
-              <div className="max-h-48 overflow-y-auto space-y-3 pr-1">
+              <div className="max-h-48 overflow-y-auto space-y-3 pr-1 pl-4">
                 {sortedDates.map((dateKey) => (
                   <div key={dateKey}>
                     <p className="text-xs font-bold text-blue-800 mb-1 sticky top-0 bg-white py-1">

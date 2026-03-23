@@ -129,7 +129,7 @@ export default function BookingForm({
               </p>
             </div>
           ) : (
-            <div className="max-h-80 overflow-y-auto space-y-4 pr-1">
+            <div className="max-h-80 overflow-y-auto space-y-4 pr-1 pl-4">
               {sortedDates.map((dateKey) => (
                 <div key={dateKey}>
                   <p className="text-sm font-bold text-blue-800 mb-2 sticky top-0 bg-white py-1">

@@ -227,7 +227,7 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
                 </p>
               </div>
             ) : (
-              <div className="max-h-64 overflow-y-auto space-y-3 pr-1">
+              <div className="max-h-64 overflow-y-auto space-y-3 pr-1 pl-4">
                 {sortedDates.map((dateKey) => (
                   <div key={dateKey}>
                     <p className="text-sm font-bold text-blue-800 mb-2 sticky top-0 bg-white py-1">
