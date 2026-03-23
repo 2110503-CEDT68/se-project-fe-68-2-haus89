@@ -1,14 +1,11 @@
 'use client'
 
-import React, { useState } from 'react';
-import { Button, Dialog, DialogTitle, DialogContent } from "@mui/material";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+import React, { useState, useEffect } from 'react';
+import { Button, Dialog, DialogTitle, DialogContent, CircularProgress } from "@mui/material";
+import dayjs from 'dayjs';
 import cancelBooking from '../libs/cancelBooking';
 import rescheduleBooking from '../libs/rescheduleBooking';
+import getDentistAvailability, { AvailableSlot } from '../libs/getDentistAvailability';
 
 interface BookingCardProps {
   booking: any;
@@ -17,14 +14,49 @@ interface BookingCardProps {
 
 export default function BookingCard({ booking, onBookingUpdate }: BookingCardProps) {
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-  const [selectedStartTime, setSelectedStartTime] = useState<Dayjs | null>(null);
-  const [selectedEndTime, setSelectedEndTime] = useState<Dayjs | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
+  const [slots, setSlots] = useState<AvailableSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [error, setError] = useState("");
 
   if (!booking) return null;
+
+  const fetchSlots = async () => {
+    const dentistId = booking.dentist?._id || booking.dentist;
+    if (!dentistId) return;
+
+    setSlotsLoading(true);
+    try {
+      const token = localStorage.getItem("token") || undefined;
+      const availableSlots = await getDentistAvailability(dentistId, token);
+      const now = dayjs();
+      setSlots(
+        availableSlots.filter(
+          (slot) => !slot.isBooked && dayjs(slot.date).isAfter(now, "day")
+        )
+      );
+    } catch (err: any) {
+      setError(err.message || "Failed to load available slots");
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  const handleOpenReschedule = () => {
+    setRescheduleOpen(true);
+    setSelectedSlot(null);
+    setError("");
+    fetchSlots();
+  };
+
+  const handleCloseReschedule = () => {
+    setRescheduleOpen(false);
+    setSelectedSlot(null);
+    setSlots([]);
+    setError("");
+  };
 
   const handleCancel = async () => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) {
@@ -53,8 +85,8 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
   };
 
   const handleReschedule = async () => {
-    if (!selectedDate || !selectedStartTime || !selectedEndTime) {
-      setError("Please select date and time");
+    if (!selectedSlot) {
+      setError("Please select a time slot");
       return;
     }
 
@@ -69,15 +101,12 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
       }
 
       await rescheduleBooking(token, booking._id, {
-        date: selectedDate.format("YYYY-MM-DD"),
-        startTime: selectedStartTime.format("HH:mm"),
-        endTime: selectedEndTime.format("HH:mm"),
+        date: dayjs(selectedSlot.date).format("YYYY-MM-DD"),
+        startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
       });
 
-      setRescheduleOpen(false);
-      setSelectedDate(null);
-      setSelectedStartTime(null);
-      setSelectedEndTime(null);
+      handleCloseReschedule();
       if (onBookingUpdate) {
         onBookingUpdate();
       }
@@ -88,9 +117,24 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
     }
   };
 
+  // Group slots by date
+  const groupedSlots = slots.reduce(
+    (groups, slot) => {
+      const dateKey = dayjs(slot.date).format("YYYY-MM-DD");
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(slot);
+      return groups;
+    },
+    {} as Record<string, AvailableSlot[]>
+  );
+
+  const sortedDates = Object.keys(groupedSlots).sort();
+
   return (
     <>
-      {error && (
+      {error && !rescheduleOpen && (
         <div className="bg-red-100 text-red-600 p-4 rounded-lg mb-6">
           {error}
         </div>
@@ -137,7 +181,7 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
             variant="outlined" 
             color="primary" 
             fullWidth
-            onClick={() => setRescheduleOpen(true)}
+            onClick={handleOpenReschedule}
             disabled={canceling}
           >
             Reschedule
@@ -155,95 +199,92 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
       </div>
 
       {rescheduleOpen && (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Dialog open={rescheduleOpen} onClose={() => {
-            setRescheduleOpen(false);
-            setSelectedDate(null);
-            setSelectedStartTime(null);
-            setSelectedEndTime(null);
-            setError("");
-          }} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{ fontWeight: 700, fontSize: '1.25rem', color: '#1e3a5f' }}>
-              Reschedule Appointment
-            </DialogTitle>
-            <DialogContent sx={{ pt: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              {error && (
-                <div className="bg-red-100 text-red-600 p-3 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Select New Date *</label>
-                <DatePicker
-                  value={selectedDate}
-                  onChange={setSelectedDate}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: true,
-                    },
-                  }}
-                />
+        <Dialog open={rescheduleOpen} onClose={handleCloseReschedule} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ fontWeight: 700, fontSize: '1.25rem', color: '#1e3a5f' }}>
+            Reschedule Appointment
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {error && (
+              <div className="bg-red-100 text-red-600 p-3 rounded-lg">
+                {error}
               </div>
+            )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Start Time *</label>
-                  <TimePicker
-                    value={selectedStartTime}
-                    onChange={setSelectedStartTime}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        required: true,
-                      },
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">End Time *</label>
-                  <TimePicker
-                    value={selectedEndTime}
-                    onChange={setSelectedEndTime}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        required: true,
-                      },
-                    }}
-                  />
-                </div>
+            <label className="block text-sm font-bold text-gray-700">
+              Select New Time Slot *
+            </label>
+
+            {slotsLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <CircularProgress size={28} />
+                <span className="ml-3 text-gray-500 text-sm">Loading available slots...</span>
               </div>
-            </DialogContent>
+            ) : slots.length === 0 ? (
+              <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-500 font-medium">No available slots</p>
+                <p className="text-gray-400 text-sm mt-1">
+                  This dentist has no open time slots at the moment.
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-64 overflow-y-auto space-y-3 pr-1">
+                {sortedDates.map((dateKey) => (
+                  <div key={dateKey}>
+                    <p className="text-sm font-bold text-blue-800 mb-2 sticky top-0 bg-white py-1">
+                      📅 {dayjs(dateKey).format("dddd, MMMM D, YYYY")}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {groupedSlots[dateKey].map((slot, idx) => {
+                        const isSelected =
+                          selectedSlot &&
+                          dayjs(selectedSlot.date).format("YYYY-MM-DD") === dateKey &&
+                          selectedSlot.startTime === slot.startTime &&
+                          selectedSlot.endTime === slot.endTime;
 
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => {
-                  setRescheduleOpen(false);
-                  setSelectedDate(null);
-                  setSelectedStartTime(null);
-                  setSelectedEndTime(null);
-                  setError("");
-                }}
-                disabled={rescheduleLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                onClick={handleReschedule}
-                disabled={rescheduleLoading || !selectedDate || !selectedStartTime || !selectedEndTime}
-              >
-                {rescheduleLoading ? "Rescheduling..." : "Confirm"}
-              </Button>
-            </div>
-          </Dialog>
-        </LocalizationProvider>
+                        return (
+                          <button
+                            key={`${dateKey}-${idx}`}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`p-3 rounded-lg border-2 text-left transition-all ${
+                              isSelected
+                                ? "border-blue-500 bg-blue-50 text-blue-800 ring-2 ring-blue-200"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50"
+                            }`}
+                          >
+                            <span className="text-sm font-bold">
+                              🕐 {slot.startTime} - {slot.endTime}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DialogContent>
+
+          <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleCloseReschedule}
+              disabled={rescheduleLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={handleReschedule}
+              disabled={rescheduleLoading || !selectedSlot}
+            >
+              {rescheduleLoading ? "Rescheduling..." : "Confirm"}
+            </Button>
+          </div>
+        </Dialog>
       )}
     </>
   );
