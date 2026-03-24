@@ -47,7 +47,7 @@ export default function TopMenu() {
           
           <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="text-2xl font-extrabold text-blue-900 tracking-tight">
-              Haus<span className="text-blue-500">89</span>
+              Real<span className="text-blue-500">Haus89</span>
             </Link>
           </div>
 
