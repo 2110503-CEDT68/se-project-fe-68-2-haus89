@@ -134,6 +134,16 @@ export default function AdminDashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              sx={{ fontWeight: 700, borderRadius: '8px' }}
+              onClick={() => router.push('/admin/dentists')}
+            >
+              👨‍⚕️ Manage Dentists
+            </Button>
+
             <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold">
               {bookings.length} Booking{bookings.length !== 1 ? 's' : ''}
             </span>
