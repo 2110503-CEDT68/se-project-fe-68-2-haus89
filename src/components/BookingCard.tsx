@@ -155,8 +155,8 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
         <div className="flex justify-between items-start mb-6">
           <div>
             <p className="text-sm text-gray-500 font-bold mb-1">Dentist</p>
-            <h2 className="text-2xl font-bold text-gray-800">{booking.dentist?.name || "คุณหมอ"}</h2>
-            <p className="text-blue-600">{booking.dentist?.areaOfExpertise || "ทันตแพทย์"}</p>
+            <h2 className="text-2xl font-bold text-gray-800">{booking.dentist?.name || "Doctor"}</h2>
+            <p className="text-blue-600">{booking.dentist?.areaOfExpertise || "Dentist"}</p>
           </div>
           <span className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">
             {booking.status || "CONFIRMED"}

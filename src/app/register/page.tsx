@@ -26,10 +26,10 @@ export default function RegisterPage() {
           localStorage.setItem("token", data.token);
         }
         
-        alert("Registration Successful! สมัครสมาชิกสำเร็จ");
+        alert("Registration Successful!");
         router.push("/");
       } catch (err: any) {
-        setError(err.message || "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+        setError(err.message || "Unable to connect to server");
       }
     };
 

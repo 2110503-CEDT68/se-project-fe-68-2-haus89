@@ -32,8 +32,8 @@ export default function AdminSlotModal({ open, onClose, dentist, onRefresh }: an
 
   const handleDeleteSlot = async (slotId: string, isBooked: boolean) => {
     const confirmMsg = isBooked 
-      ? ' เวลานี้ถูกคนไข้จองไว้แล้ว!\nหากคุณลบเวลานี้ การจองของคนไข้จะถูกยกเลิกไปด้วย ยืนยันที่จะลบหรือไม่?' 
-      : 'คุณต้องการลบเวลาว่างนี้ใช่หรือไม่?';
+      ? 'This slot is already booked by a patient!\nIf you delete this slot, the patient\'s booking will also be cancelled. Do you want to proceed?' 
+      : 'Are you sure you want to delete this available slot?';
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -58,7 +58,7 @@ export default function AdminSlotModal({ open, onClose, dentist, onRefresh }: an
         <div>
           <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">Current Available Slots</h4>
           {dentist.availableSlots?.length === 0 ? (
-            <p className="text-sm text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg">ไม่มีเวลาว่างในระบบ</p>
+            <p className="text-sm text-gray-500 italic text-center py-4 bg-gray-50 rounded-lg">No available slots in the system</p>
           ) : (
             <ul className="space-y-3 max-h-60 overflow-y-auto pr-2">
               {dentist.availableSlots?.map((slot: any) => (

@@ -24,7 +24,7 @@ export default function DentistsPage() {
           const dentistsArray = data.data?.dentists || data.data || [];
           setDentists(dentistsArray);
         } catch (err) {
-          setError("ไม่สามารถดึงข้อมูลได้");
+          setError("Unable to fetch data");
         } finally {
         setLoading(false); 
       }
@@ -81,7 +81,7 @@ export default function DentistsPage() {
         )}
 
         {loading ? (
-          <div className="text-center text-gray-500 text-xl mt-20">กำลังโหลดข้อมูล...</div>
+          <div className="text-center text-gray-500 text-xl mt-20">Loading...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {dentists.map((dentist) => (
@@ -104,7 +104,7 @@ export default function DentistsPage() {
             
             {dentists.length === 0 && !error && (
               <div className="col-span-full text-center text-gray-500 py-10">
-                ยังไม่มีรายชื่อทันตแพทย์ในระบบครับ (อาจจะต้องให้ Admin เพิ่มข้อมูลเข้ามาก่อน)
+                No dentists in the system yet (Admin may need to add dentists first)
               </div>
             )}
           </div>

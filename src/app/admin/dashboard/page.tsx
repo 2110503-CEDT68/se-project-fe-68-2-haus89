@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
         {/* Loading */}
         {loading ? (
           <div className="text-center text-gray-500 text-xl font-bold mt-20">
-            กำลังโหลดข้อมูล...
+            Loading...
           </div>
         ) : bookings.length === 0 ? (
           <div className="bg-white p-10 rounded-xl shadow-md border border-gray-100 text-center">
@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
               No bookings found
             </h2>
             <p className="text-gray-500">
-              ยังไม่มีการจองคิวในระบบ
+              No bookings in the system yet
             </p>
           </div>
         ) : (

@@ -24,7 +24,7 @@ export default function MyBookingPage() {
       setBooking(data.data?.booking || data.data);
       setError("");
     } catch (err: any) {
-      setError("คุณยังไม่มีการจองคิวในระบบครับ");
+      setError("You don't have any bookings in the system yet");
       setBooking(null);
     }
   };
@@ -50,7 +50,7 @@ export default function MyBookingPage() {
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-500 text-xl font-bold mt-20">กำลังโหลดข้อมูล...</div>
+          <div className="text-center text-gray-500 text-xl font-bold mt-20">Loading...</div>
         ) : booking ? (
           <BookingCard booking={booking} onBookingUpdate={fetchMyBooking} />
         ) : (

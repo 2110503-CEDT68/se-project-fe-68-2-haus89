@@ -109,7 +109,7 @@ export default function AdminDentistsPage() {
         {error && <div className="bg-red-100 text-red-600 p-4 rounded-lg mb-6 font-bold">{error}</div>}
 
         {loading ? (
-          <div className="text-center text-gray-500 text-xl font-bold mt-20">กำลังโหลดข้อมูล...</div>
+          <div className="text-center text-gray-500 text-xl font-bold mt-20">Loading...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {dentists.map((dentist) => (

@@ -18,7 +18,7 @@ export default function HomePage() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
-    alert("ออกจากระบบเรียบร้อยแล้ว");
+    alert("Logged out successfully");
     router.refresh(); 
   };
 
@@ -28,7 +28,7 @@ export default function HomePage() {
         Dentist Booking
       </h1>
       <p className="text-lg text-gray-600 mb-8 max-w-xl">
-        จองคิวทันตแพทย์ผู้เชี่ยวชาญ สะดวก รวดเร็ว ตลอด 24 ชั่วโมง
+        Book appointments with expert dentists - convenient, fast, 24/7
       </p>
 
       <div className="flex gap-4">

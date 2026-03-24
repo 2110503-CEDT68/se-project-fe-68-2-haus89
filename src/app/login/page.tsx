@@ -48,11 +48,11 @@ export default function LoginPage() {
         if (redirectUrl) {
           router.push(redirectUrl);
         } else {
-          alert("Login Successful! เข้าสู่ระบบสำเร็จ");
+          alert("Login Successful!");
           router.push("/");
         }
       } catch (err: any) {
-        setError(err.message || "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+        setError(err.message || "Unable to connect to server");
       }
     };
 
