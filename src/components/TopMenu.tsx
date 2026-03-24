@@ -61,6 +61,9 @@ export default function TopMenu() {
                 <Link href="/my-booking" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
                   My Booking
                 </Link>
+                <Link href="/profile" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
+                  My Profile
+                </Link>
                 {isAdmin && (
                   <Link href="/admin/dashboard" className="text-amber-600 hover:text-amber-700 font-bold transition-colors">
                     Dashboard
