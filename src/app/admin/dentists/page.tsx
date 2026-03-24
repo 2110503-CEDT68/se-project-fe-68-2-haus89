@@ -124,8 +124,8 @@ export default function AdminDentistsPage() {
                   <p className="text-sm font-bold text-gray-600 mb-4">{dentist.areaOfExpertise}</p>
                   
                   <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600 space-y-1">
-                    <p>📧 {dentist.email}</p>
-                    <p>📱 {dentist.phone}</p>
+                    <p> {dentist.email}</p>
+                    <p> {dentist.phone}</p>
                   </div>
                 </div>
 
@@ -137,7 +137,7 @@ export default function AdminDentistsPage() {
                         setSlotModalOpen(true);
                       }}
                     >
-                      ⏰ Slots ({dentist.availableSlots?.length || 0})
+                       Slots ({dentist.availableSlots?.length || 0})
                     </Button>
                   <Button 
                     variant="outlined" color="info" size="small" fullWidth sx={{ fontWeight: 700, borderRadius: '6px' }}
@@ -146,7 +146,7 @@ export default function AdminDentistsPage() {
                       setModalOpen(true);
                     }}
                   >
-                    ✏️ Edit
+                     Edit
                   </Button>
                   <Button 
                     variant="outlined" color="error" size="small" fullWidth sx={{ fontWeight: 700, borderRadius: '6px' }}
@@ -155,7 +155,7 @@ export default function AdminDentistsPage() {
                       setDeleteDialogOpen(true);
                     }}
                   >
-                    🗑️ Del
+                     Delete
                   </Button>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { TextField, Button } from "@mui/material";
 import Link from "next/link";
 import userLogin from "../../libs/userLogin"; 
@@ -9,11 +9,21 @@ import getMe from "../../libs/getMe";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  
+  const [redirectUrl, setRedirectUrl] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlValue = params.get("redirect"); 
+    
+    if (urlValue) {
+      setRedirectUrl(urlValue);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -34,8 +44,6 @@ export default function LoginPage() {
         }
         
         window.dispatchEvent(new Event('authChange'));
-        
-        const redirectUrl = searchParams.get("redirect");
         
         if (redirectUrl) {
           router.push(redirectUrl);
@@ -102,7 +110,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-
     </main>
   );
 }

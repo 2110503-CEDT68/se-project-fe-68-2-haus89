@@ -1,9 +1,10 @@
 // src/libs/getDentists.ts
-export default async function getDentists() {
+export default async function getDentists(token?: string) {
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/dentists`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
 

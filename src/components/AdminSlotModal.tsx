@@ -32,7 +32,7 @@ export default function AdminSlotModal({ open, onClose, dentist, onRefresh }: an
 
   const handleDeleteSlot = async (slotId: string, isBooked: boolean) => {
     const confirmMsg = isBooked 
-      ? '⚠️ เวลานี้ถูกคนไข้จองไว้แล้ว!\nหากคุณลบเวลานี้ การจองของคนไข้จะถูกยกเลิกไปด้วย ยืนยันที่จะลบหรือไม่?' 
+      ? ' เวลานี้ถูกคนไข้จองไว้แล้ว!\nหากคุณลบเวลานี้ การจองของคนไข้จะถูกยกเลิกไปด้วย ยืนยันที่จะลบหรือไม่?' 
       : 'คุณต้องการลบเวลาว่างนี้ใช่หรือไม่?';
 
     if (!window.confirm(confirmMsg)) return;
@@ -49,7 +49,7 @@ export default function AdminSlotModal({ open, onClose, dentist, onRefresh }: an
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 800, color: '#1e3a8a', display: 'flex', justifyContent: 'space-between' }}>
-        <span>⏰ Manage Slots: {dentist.name}</span>
+        <span> Manage Slots: {dentist.name}</span>
         <Button onClick={onClose} color="inherit" size="small" sx={{ minWidth: 'auto', p: 0 }}>❌</Button>
       </DialogTitle>
       
@@ -65,10 +65,10 @@ export default function AdminSlotModal({ open, onClose, dentist, onRefresh }: an
                 <li key={slot._id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <div>
                     <p className="font-bold text-gray-700 text-sm">
-                      📅 {new Date(slot.date).toLocaleDateString()}
+                       {new Date(slot.date).toLocaleDateString()}
                     </p>
                     <p className="text-gray-600 text-sm">
-                      🕒 {slot.startTime} - {slot.endTime}
+                       {slot.startTime} - {slot.endTime}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -80,10 +80,10 @@ export default function AdminSlotModal({ open, onClose, dentist, onRefresh }: an
                     
                     <button 
                       onClick={() => handleDeleteSlot(slot._id, slot.isBooked)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded"
+                      className="text-sm font-bold text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded "
                       title="Delete Slot"
                     >
-                      🗑️
+                      Delete
                     </button>
                   </div>
                 </li>

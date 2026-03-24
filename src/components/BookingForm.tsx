@@ -173,7 +173,7 @@ export default function BookingForm({
                 {displayedDates.map((dateKey) => (
                   <div key={dateKey}>
                     <p className="text-sm font-semibold text-gray-700 mb-3 sticky top-0 bg-white py-2 z-10 border-b border-gray-100">
-                      📅 {dayjs(dateKey).format("dddd, MMMM D, YYYY")}
+                       {dayjs(dateKey).format("dddd, MMMM D, YYYY")}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {groupedSlots[dateKey].map((slot, idx) => {
@@ -195,7 +195,7 @@ export default function BookingForm({
                             }`}
                           >
                             <span className="text-[15px] font-semibold flex items-center justify-center gap-2">
-                              🕒 {slot.startTime} - {slot.endTime}
+                               {slot.startTime} - {slot.endTime}
                             </span>
                           </button>
                         );

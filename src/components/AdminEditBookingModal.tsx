@@ -157,10 +157,10 @@ export default function AdminEditBookingModal({
           <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
             <p className="text-sm text-gray-500 font-bold mb-1">Current Schedule</p>
             <p className="text-sm font-medium text-gray-700">
-              📅 {booking ? dayjs(booking.date).format('dddd, MMMM D, YYYY') : 'N/A'}
+               {booking ? dayjs(booking.date).format('dddd, MMMM D, YYYY') : 'N/A'}
             </p>
             <p className="text-sm font-medium text-gray-700">
-              🕐 {booking?.startTime || 'N/A'} - {booking?.endTime || 'N/A'}
+               {booking?.startTime || 'N/A'} - {booking?.endTime || 'N/A'}
             </p>
           </div>
 
@@ -216,7 +216,7 @@ export default function AdminEditBookingModal({
                   {displayedDates.map((dateKey) => (
                   <div key={dateKey}>
                     <p className="text-sm font-semibold text-gray-700 mb-2 sticky top-0 bg-white py-1.5 z-10 border-b border-gray-100">
-                      📅 {dayjs(dateKey).format("ddd, MMM D, YYYY")}
+                       {dayjs(dateKey).format("ddd, MMM D, YYYY")}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {groupedSlots[dateKey].map((slot, idx) => {
@@ -238,7 +238,7 @@ export default function AdminEditBookingModal({
                             }`}
                           >
                             <span className="text-[13px] font-semibold flex items-center justify-center gap-1.5">
-                              🕒 {slot.startTime} - {slot.endTime}
+                               {slot.startTime} - {slot.endTime}
                             </span>
                           </button>
                         );

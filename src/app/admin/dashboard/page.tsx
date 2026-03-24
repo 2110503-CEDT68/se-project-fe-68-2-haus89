@@ -141,7 +141,7 @@ export default function AdminDashboardPage() {
               sx={{ fontWeight: 700, borderRadius: '8px' }}
               onClick={() => router.push('/admin/dentists')}
             >
-              👨‍⚕️ Manage Dentists
+               Manage Dentists
             </Button>
 
             <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold">
@@ -255,7 +255,7 @@ export default function AdminDashboardPage() {
                       onClick={() => handleEditClick(booking)}
                       sx={{ fontWeight: 700, borderRadius: '8px', textTransform: 'none' }}
                     >
-                      ✏️ Edit
+                       Edit
                     </Button>
                     <Button
                       variant="outlined"
@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
                       onClick={() => handleDeleteClick(booking)}
                       sx={{ fontWeight: 700, borderRadius: '8px', textTransform: 'none' }}
                     >
-                      🗑️ Delete
+                       Delete
                     </Button>
                   </div>
                 </div>
