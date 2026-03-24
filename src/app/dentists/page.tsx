@@ -35,7 +35,9 @@ export default function DentistsPage() {
 
   useEffect(() => {
     const pendingBookingId = localStorage.getItem("pendingBooking");
-    if (pendingBookingId && dentists.length > 0) {
+    const token = localStorage.getItem("token");
+    
+    if (pendingBookingId && dentists.length > 0 && token) {
       const dentist = dentists.find(d => d._id === pendingBookingId);
       if (dentist) {
         setSelectedDentist(dentist);

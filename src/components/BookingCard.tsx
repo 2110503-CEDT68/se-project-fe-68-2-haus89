@@ -27,6 +27,19 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
 
   if (!booking) return null;
 
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'confirmed':
+        return 'bg-green-100 text-green-700';
+      case 'completed':
+        return 'bg-blue-100 text-blue-700';
+      case 'cancelled':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   const fetchSlots = async () => {
     const dentistId = booking.dentist?._id || booking.dentist;
     if (!dentistId) return;
@@ -158,7 +171,7 @@ export default function BookingCard({ booking, onBookingUpdate }: BookingCardPro
             <h2 className="text-2xl font-bold text-gray-800">{booking.dentist?.name || "Doctor"}</h2>
             <p className="text-blue-600">{booking.dentist?.areaOfExpertise || "Dentist"}</p>
           </div>
-          <span className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">
+          <span className={`${getStatusColor(booking.status)} px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider`}>
             {booking.status || "CONFIRMED"}
           </span>
         </div>
