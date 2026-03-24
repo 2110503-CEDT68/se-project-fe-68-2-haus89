@@ -138,7 +138,7 @@ export default function AdminSlotModal({ open, onClose, dentist, onRefresh }: an
             </Button>
           </form>
         </div>
-
+      
       </DialogContent>
     </Dialog>
   );
