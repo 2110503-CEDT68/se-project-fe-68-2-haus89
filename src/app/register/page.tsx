@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TextField, Button } from "@mui/material";
 import Link from "next/link";
 import userRegister from "../../libs/userRegister";
+import getMe from "../../libs/getMe";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,6 +15,17 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  
+  const [redirectUrl, setRedirectUrl] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlValue = params.get("redirect"); 
+    
+    if (urlValue) {
+      setRedirectUrl(urlValue);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -24,10 +36,25 @@ export default function RegisterPage() {
         
         if (data.token) {
           localStorage.setItem("token", data.token);
+          
+          // Fetch user info to get role
+          try {
+            const meData = await getMe(data.token);
+            const role = meData.data?.role || meData.role || 'user';
+            localStorage.setItem("role", role);
+          } catch {
+            localStorage.setItem("role", "user");
+          }
+          
+          window.dispatchEvent(new Event('authChange'));
         }
         
-        alert("Registration Successful!");
-        router.push("/");
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else {
+          alert("Registration Successful!");
+          router.push("/");
+        }
       } catch (err: any) {
         setError(err.message || "Unable to connect to server");
       }
