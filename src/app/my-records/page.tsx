@@ -53,7 +53,6 @@ export default function MyRecordsPage() {
           <div className="text-center text-gray-500 text-xl font-bold mt-20">Loading records...</div>
         ) : records && records.length > 0 ? (
           <div className="space-y-4">
-            {/* เปลี่ยนเป็น record._id ตามฟอร์แมตของ MongoDB */}
             {records.map((record: any, index: number) => (
               <RecordCard key={record._id || index} record={record} />
             ))}
