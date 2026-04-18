@@ -7,6 +7,7 @@ import getMe from '../../../libs/getMe';
 import getDentist from '../../../libs/getDentist';
 import addDentistSlot from '../../../libs/admin/addDentistSlot';
 import deleteDentistSlot from '../../../libs/admin/deleteDentistSlot';
+import createRecord from '../../../libs/admin/createRecord';
 
 interface Slot {
   _id: string;
@@ -14,6 +15,8 @@ interface Slot {
   startTime: string;
   endTime: string;
   isBooked: boolean;
+  bookedBy?: string;    
+  bookingId?: string;   
 }
 
 interface RecordForm {
@@ -33,6 +36,7 @@ export default function DentistSlotsPage() {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [saving, setSaving] = useState(false);
+
 
   // Record modal state
   const [recordSlot, setRecordSlot] = useState<Slot | null>(null);
@@ -101,10 +105,29 @@ export default function DentistSlotsPage() {
     setRecordForm({ diagnosis: '', treatments: '', prescriptions: '', followUpDate: '', dentistNote: '' });
   };
 
+  
+
   const handleCreateRecord = async () => {
-    // TODO: implement record creation
-    alert('Record creation not yet implemented.');
-    setRecordSlot(null);
+    if (!recordSlot || !dentist || !recordSlot.bookedBy) return;
+    try {
+      const token = localStorage.getItem('token')!;
+
+      await createRecord(token, {
+        patient:      recordSlot.bookedBy,   
+        dentist:      dentist._id,
+        bookingId:    recordSlot.bookingId,  
+        diagnosis:    recordForm.diagnosis,
+        treatments:   recordForm.treatments,
+        prescriptions: recordForm.prescriptions,
+        followUpDate: recordForm.followUpDate,
+        dentistNote:  recordForm.dentistNote,
+      });
+
+      alert('Record created!');
+      setRecordSlot(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to create record');
+    }
   };
 
   if (loading) return <main className="min-h-screen flex items-center justify-center text-gray-500 text-xl font-bold">Loading...</main>;
