@@ -2,11 +2,27 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, TextField } from '@mui/material';
+import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import getMe from '../../../libs/getMe';
 import getDentist from '../../../libs/getDentist';
 import addDentistSlot from '../../../libs/admin/addDentistSlot';
 import deleteDentistSlot from '../../../libs/admin/deleteDentistSlot';
+
+interface Slot {
+  _id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  isBooked: boolean;
+}
+
+interface RecordForm {
+  diagnosis: string;
+  treatments: string;
+  prescriptions: string;
+  followUpDate: string;
+  dentistNote: string;
+}
 
 export default function DentistSlotsPage() {
   const router = useRouter();
@@ -17,6 +33,16 @@ export default function DentistSlotsPage() {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Record modal state
+  const [recordSlot, setRecordSlot] = useState<Slot | null>(null);
+  const [recordForm, setRecordForm] = useState<RecordForm>({
+    diagnosis: '',
+    treatments: '',
+    prescriptions: '',
+    followUpDate: '',
+    dentistNote: '',
+  });
 
   const fetchDentist = async () => {
     try {
@@ -70,6 +96,17 @@ export default function DentistSlotsPage() {
     }
   };
 
+  const openRecordModal = (slot: Slot) => {
+    setRecordSlot(slot);
+    setRecordForm({ diagnosis: '', treatments: '', prescriptions: '', followUpDate: '', dentistNote: '' });
+  };
+
+  const handleCreateRecord = async () => {
+    // TODO: implement record creation
+    alert('Record creation not yet implemented.');
+    setRecordSlot(null);
+  };
+
   if (loading) return <main className="min-h-screen flex items-center justify-center text-gray-500 text-xl font-bold">Loading...</main>;
   if (error) return <main className="min-h-screen flex items-center justify-center text-red-500 text-xl font-bold">{error}</main>;
 
@@ -90,16 +127,24 @@ export default function DentistSlotsPage() {
             <p className="text-sm text-gray-500 italic text-center py-6">No slots yet. Add one below.</p>
           ) : (
             <ul className="space-y-3 max-h-72 overflow-y-auto">
-              {dentist.availableSlots.map((slot: any) => (
+              {dentist.availableSlots.map((slot: Slot) => (
                 <li key={slot._id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <div>
                     <p className="font-bold text-gray-700 text-sm">{new Date(slot.date).toLocaleDateString()}</p>
                     <p className="text-gray-600 text-sm">{slot.startTime} – {slot.endTime}</p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold px-2 py-1 rounded-full ${slot.isBooked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                       {slot.isBooked ? 'Booked' : 'Available'}
                     </span>
+                    {slot.isBooked && (
+                      <button
+                        onClick={() => openRecordModal(slot)}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded border border-blue-200"
+                      >
+                        + Record
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteSlot(slot._id, slot.isBooked)}
                       className="text-sm font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded"
@@ -161,6 +206,72 @@ export default function DentistSlotsPage() {
         </div>
 
       </div>
+
+      {/* Create Record Modal */}
+      <Dialog open={!!recordSlot} onClose={() => setRecordSlot(null)} maxWidth="sm" fullWidth>
+        <DialogTitle className="font-bold">Create Treatment Record</DialogTitle>
+        <DialogContent className="flex flex-col gap-4 pt-4">
+          {recordSlot && (
+            <p className="text-sm text-gray-500 mb-2">
+              Slot: {new Date(recordSlot.date).toLocaleDateString()} · {recordSlot.startTime} – {recordSlot.endTime}
+            </p>
+          )}
+          <TextField
+            label="Diagnosis"
+            value={recordForm.diagnosis}
+            onChange={(e) => setRecordForm(f => ({ ...f, diagnosis: e.target.value }))}
+            size="small"
+            fullWidth
+            required
+            multiline
+            rows={2}
+          />
+          <TextField
+            label="Treatments (comma-separated)"
+            value={recordForm.treatments}
+            onChange={(e) => setRecordForm(f => ({ ...f, treatments: e.target.value }))}
+            size="small"
+            fullWidth
+            placeholder="e.g. Cleaning, Filling"
+          />
+          <TextField
+            label="Prescriptions (comma-separated)"
+            value={recordForm.prescriptions}
+            onChange={(e) => setRecordForm(f => ({ ...f, prescriptions: e.target.value }))}
+            size="small"
+            fullWidth
+            placeholder="e.g. Amoxicillin 500mg, Ibuprofen"
+          />
+          <TextField
+            label="Follow-up Date"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={recordForm.followUpDate}
+            onChange={(e) => setRecordForm(f => ({ ...f, followUpDate: e.target.value }))}
+            size="small"
+            fullWidth
+          />
+          <TextField
+            label="Dentist Note"
+            value={recordForm.dentistNote}
+            onChange={(e) => setRecordForm(f => ({ ...f, dentistNote: e.target.value }))}
+            size="small"
+            fullWidth
+            multiline
+            rows={2}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRecordSlot(null)}>Cancel</Button>
+          <Button
+            onClick={handleCreateRecord}
+            variant="contained"
+            disabled={!recordForm.diagnosis}
+          >
+            Create Record
+          </Button>
+        </DialogActions>
+      </Dialog>
     </main>
   );
 }
