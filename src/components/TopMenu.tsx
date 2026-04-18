@@ -9,14 +9,16 @@ export default function TopMenu() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDentist, setIsDentist] = useState(false);
+  const [role, setRole] = useState('');
 
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('token');
-      const role = localStorage.getItem('role');
+      const r = localStorage.getItem('role') || '';
       setIsLoggedIn(!!token);
-      setIsAdmin(role === 'admin');
-      setIsDentist(role === 'dentist');
+      setIsAdmin(r === 'admin');
+      setIsDentist(r === 'dentist');
+      setRole(r);
     };
     
     checkAuth();
@@ -36,6 +38,7 @@ export default function TopMenu() {
     setIsLoggedIn(false);
     setIsAdmin(false);
     setIsDentist(false);
+    setRole('');
     
     window.dispatchEvent(new Event('authChange'));
     
@@ -80,8 +83,11 @@ export default function TopMenu() {
                     My Slots
                   </Link>
                 )}
-                <button 
-                  onClick={handleLogout} 
+                <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-500 capitalize">
+                  {role}
+                </span>
+                <button
+                  onClick={handleLogout}
                   className="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition-colors text-sm"
                 >
                   Log Out
