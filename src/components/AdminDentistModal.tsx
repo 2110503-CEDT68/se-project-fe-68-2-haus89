@@ -29,6 +29,7 @@ export default function AdminDentistModal({ open, onClose, dentist, onSave }: an
     areaOfExpertise: 'General Dentistry',
     email: '',
     phone: '',
+    password: '',
   });
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function AdminDentistModal({ open, onClose, dentist, onSave }: an
         areaOfExpertise: dentist.areaOfExpertise,
         email: dentist.email,
         phone: dentist.phone,
+        password: '',
       });
     } else {
       setFormData({
@@ -47,6 +49,7 @@ export default function AdminDentistModal({ open, onClose, dentist, onSave }: an
         areaOfExpertise: 'General Dentistry',
         email: '',
         phone: '',
+        password: '',
       });
     }
   }, [dentist, open]);
@@ -57,7 +60,9 @@ export default function AdminDentistModal({ open, onClose, dentist, onSave }: an
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const payload: any = { ...formData };
+    if (dentist) delete payload.password;
+    onSave(payload);
   };
 
   return (
@@ -125,6 +130,19 @@ export default function AdminDentistModal({ open, onClose, dentist, onSave }: an
             onChange={handleChange}
             fullWidth
           />
+
+          {!dentist && (
+            <TextField
+              required
+              name="password"
+              label="Initial Password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              fullWidth
+              helperText="Dentist will use this to log in"
+            />
+          )}
 
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
