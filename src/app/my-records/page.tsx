@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import getMyRecords from "../../libs/getMyRecords"; 
+import getMyRecords from "../../libs/getMyRecords";
 import RecordCard from "../../components/RecordCard"; 
 
 export default function MyRecordsPage() {
@@ -11,6 +11,7 @@ export default function MyRecordsPage() {
   const [records, setRecords] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<string>("");
 
   const fetchMyRecords = async () => {
     try {
@@ -32,6 +33,9 @@ export default function MyRecordsPage() {
   useEffect(() => {
     const loadRecords = async () => {
       setLoading(true);
+      // Get user role from localStorage
+      const role = localStorage.getItem("role") || "";
+      setUserRole(role);
       await fetchMyRecords();
       setLoading(false);
     };
@@ -54,7 +58,12 @@ export default function MyRecordsPage() {
         ) : records && records.length > 0 ? (
           <div className="space-y-4">
             {records.map((record: any, index: number) => (
-              <RecordCard key={record._id || index} record={record} />
+              <RecordCard 
+                key={record._id || index} 
+                record={record}
+                userRole={userRole}
+                onRecordUpdated={fetchMyRecords}
+              />
             ))}
           </div>
         ) : (
