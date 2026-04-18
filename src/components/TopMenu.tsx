@@ -8,6 +8,7 @@ export default function TopMenu() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDentist, setIsDentist] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -15,6 +16,7 @@ export default function TopMenu() {
       const role = localStorage.getItem('role');
       setIsLoggedIn(!!token);
       setIsAdmin(role === 'admin');
+      setIsDentist(role === 'dentist');
     };
     
     checkAuth();
@@ -33,6 +35,7 @@ export default function TopMenu() {
     localStorage.removeItem('role');
     setIsLoggedIn(false);
     setIsAdmin(false);
+    setIsDentist(false);
     
     window.dispatchEvent(new Event('authChange'));
     
@@ -70,6 +73,11 @@ export default function TopMenu() {
                 {isAdmin && (
                   <Link href="/admin/dashboard" className="text-amber-600 hover:text-amber-700 font-bold transition-colors">
                     Dashboard
+                  </Link>
+                )}
+                {isDentist && (
+                  <Link href="/dentist/slots" className="text-emerald-600 hover:text-emerald-700 font-bold transition-colors">
+                    My Slots
                   </Link>
                 )}
                 <button 

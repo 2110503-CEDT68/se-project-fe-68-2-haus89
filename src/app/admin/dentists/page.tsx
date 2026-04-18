@@ -28,8 +28,9 @@ export default function AdminDentistsPage() {
   const fetchDentistsList = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          router.push('/login');
+        const role = localStorage.getItem('role');
+        if (!token || role !== 'admin') {
+          router.push('/');
           return;
         }
         
