@@ -58,6 +58,9 @@ export default function TopMenu() {
             
             {isLoggedIn ? (
               <>
+                <Link href="/my-records" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
+                  My Records
+                </Link>
                 <Link href="/my-booking" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
                   My Booking
                 </Link>
