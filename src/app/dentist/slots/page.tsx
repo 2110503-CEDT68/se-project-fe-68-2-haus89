@@ -9,6 +9,7 @@ import addDentistSlot from '../../../libs/admin/addDentistSlot';
 import deleteDentistSlot from '../../../libs/admin/deleteDentistSlot';
 import createRecord from '../../../libs/admin/createRecord';
 import getUserById from '../../../libs/getUserById';
+import getMyRecords from '../../../libs/getMyRecords';
 
 interface Slot {
   _id: string;
@@ -38,6 +39,7 @@ export default function DentistSlotsPage() {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [saving, setSaving] = useState(false);
+  const [recordedBookingIds, setRecordedBookingIds] = useState<Set<string>>(new Set());
 
 
   // Record modal state
@@ -90,6 +92,19 @@ export default function DentistSlotsPage() {
       }
       
       setDentist(dentistData);
+
+      // Fetch existing records to know which slots already have one
+      try {
+        const records = await getMyRecords(token);
+        const ids = new Set<string>(
+          (records.data || records)
+            .filter((r: any) => r.booking)
+            .map((r: any) => typeof r.booking === 'object' ? r.booking._id : r.booking)
+        );
+        setRecordedBookingIds(ids);
+      } catch {
+        // non-fatal
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load profile');
     } finally {
@@ -154,6 +169,9 @@ export default function DentistSlotsPage() {
       });
 
       alert('Record created!');
+      if (recordSlot.bookingId) {
+        setRecordedBookingIds(prev => new Set(prev).add(recordSlot.bookingId!));
+      }
       setRecordSlot(null);
     } catch (err: any) {
       alert(err.message || 'Failed to create record');
@@ -194,12 +212,14 @@ export default function DentistSlotsPage() {
                       {slot.isBooked ? 'Booked' : 'Available'}
                     </span>
                     {slot.isBooked && (
-                      <button
-                        onClick={() => openRecordModal(slot)}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded border border-blue-200"
-                      >
-                        + Record
-                      </button>
+                      slot.bookingId && recordedBookingIds.has(slot.bookingId)
+                        ? <span className="text-xs font-bold text-green-600 px-2 py-1 rounded border border-green-200 bg-green-50">Recorded</span>
+                        : <button
+                            onClick={() => openRecordModal(slot)}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded border border-blue-200"
+                          >
+                            + Record
+                          </button>
                     )}
                     <button
                       onClick={() => handleDeleteSlot(slot._id, slot.isBooked)}
