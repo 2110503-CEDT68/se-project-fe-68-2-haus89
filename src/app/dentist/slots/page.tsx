@@ -8,6 +8,7 @@ import getDentist from '../../../libs/getDentist';
 import addDentistSlot from '../../../libs/admin/addDentistSlot';
 import deleteDentistSlot from '../../../libs/admin/deleteDentistSlot';
 import createRecord from '../../../libs/admin/createRecord';
+import getUserById from '../../../libs/getUserById';
 
 interface Slot {
   _id: string;
@@ -16,7 +17,8 @@ interface Slot {
   endTime: string;
   isBooked: boolean;
   bookedBy?: string;    
-  bookingId?: string;   
+  bookingId?: string;
+  patientName?: string;
 }
 
 interface RecordForm {
@@ -59,7 +61,35 @@ export default function DentistSlotsPage() {
       const me = await getMe(token);
       const id = me.data?._id || me._id;
       const data = await getDentist(id, token);
-      setDentist(data.data);
+      
+      // Enrich slots with patient names
+      const dentistData = data.data;
+      if (dentistData?.availableSlots) {
+        const bookedSlots = dentistData.availableSlots.filter((slot: Slot) => slot.isBooked && slot.bookedBy);
+        const patientIds = new Set(bookedSlots.map((slot: Slot) => slot.bookedBy));
+        
+        // Fetch patient names
+        const patientMap = new Map<string, string>();
+        await Promise.all(
+          Array.from(patientIds).map(async (patientId) => {
+            try {
+              const userData = await getUserById(token, patientId as string);
+              patientMap.set(patientId as string, userData.data?.name || userData.name || 'Unknown');
+            } catch (error) {
+              console.error(`Failed to fetch patient ${patientId}:`, error);
+              patientMap.set(patientId as string, 'Unknown');
+            }
+          })
+        );
+        
+        // Add patient names to slots
+        dentistData.availableSlots = dentistData.availableSlots.map((slot: Slot) => ({
+          ...slot,
+          patientName: slot.bookedBy ? patientMap.get(slot.bookedBy) : undefined
+        }));
+      }
+      
+      setDentist(dentistData);
     } catch (err: any) {
       setError(err.message || 'Failed to load profile');
     } finally {
@@ -152,9 +182,12 @@ export default function DentistSlotsPage() {
             <ul className="space-y-3 max-h-72 overflow-y-auto">
               {dentist.availableSlots.map((slot: Slot) => (
                 <li key={slot._id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-bold text-gray-700 text-sm">{new Date(slot.date).toLocaleDateString()}</p>
                     <p className="text-gray-600 text-sm">{slot.startTime} – {slot.endTime}</p>
+                    {slot.isBooked && slot.patientName && (
+                      <p className="text-blue-600 text-xs font-semibold mt-1">Patient: {slot.patientName}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold px-2 py-1 rounded-full ${slot.isBooked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
@@ -235,9 +268,14 @@ export default function DentistSlotsPage() {
         <DialogTitle className="font-bold">Create Treatment Record</DialogTitle>
         <DialogContent className="flex flex-col gap-4 pt-4">
           {recordSlot && (
-            <p className="text-sm text-gray-500 mb-2">
-              Slot: {new Date(recordSlot.date).toLocaleDateString()} · {recordSlot.startTime} – {recordSlot.endTime}
-            </p>
+            <div className="bg-blue-50 p-3 rounded-lg mb-2">
+              <p className="text-sm text-gray-700 font-semibold">
+                Patient: {recordSlot.patientName || 'Unknown'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Slot: {new Date(recordSlot.date).toLocaleDateString()} · {recordSlot.startTime} – {recordSlot.endTime}
+              </p>
+            </div>
           )}
           <TextField
             label="Diagnosis"
