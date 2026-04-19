@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import getMyRecords from "../../libs/getMyRecords";
-import RecordCard from "../../components/RecordCard"; 
+import RecordCard from "../../components/RecordCard";
+import getUserById from "../../libs/getUserById"; 
 
 export default function MyRecordsPage() {
   const router = useRouter();
@@ -22,7 +23,46 @@ export default function MyRecordsPage() {
       }
 
       const data = await getMyRecords(token);
-      setRecords(data.data || []);
+      const recordsData = data.data || [];
+      
+      // Enrich records with patient and dentist names
+      if (recordsData.length > 0) {
+        const userIds = new Set<string>();
+        recordsData.forEach((record: any) => {
+          if (record.patient && typeof record.patient === 'string') userIds.add(record.patient);
+          if (record.dentist && typeof record.dentist === 'string') userIds.add(record.dentist);
+        });
+
+        // Fetch all user names in parallel
+        const userMap = new Map<string, any>();
+        await Promise.all(
+          Array.from(userIds).map(async (userId) => {
+            try {
+              const userData = await getUserById(token, userId);
+              userMap.set(userId, userData.data || userData);
+            } catch (error) {
+              console.error(`Failed to fetch user ${userId}:`, error);
+              userMap.set(userId, { name: 'Unknown' });
+            }
+          })
+        );
+
+        // Add names to records
+        const enrichedRecords = recordsData.map((record: any) => ({
+          ...record,
+          patient: typeof record.patient === 'string' 
+            ? userMap.get(record.patient) || { name: 'Unknown Patient' }
+            : record.patient,
+          dentist: typeof record.dentist === 'string'
+            ? userMap.get(record.dentist) || { name: 'Unknown Dentist' }
+            : record.dentist
+        }));
+
+        setRecords(enrichedRecords);
+      } else {
+        setRecords(recordsData);
+      }
+      
       setError("");
     } catch (err: any) {
       setError("Unable to fetch your dental records at the moment.");

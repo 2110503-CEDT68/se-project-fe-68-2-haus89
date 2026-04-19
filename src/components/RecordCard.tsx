@@ -78,8 +78,7 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
   const patientName = record.patient?.name || "Unknown Patient";
 
   const isDentistRole = userRole === 'dentist';
-  const displayRoleLabel = isDentistRole ? "Patient" : "Dentist";
-  const displayPersonName = isDentistRole ? patientName : dentistName;
+  const isAdminRole = userRole === 'admin';
 
   const handleEditClick = () => {
     setEditDiagnosis(record.diagnosis || "");
@@ -134,9 +133,21 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <p className="text-sm font-bold text-gray-500 mb-1">{displayRoleLabel}</p>
-            <h2 className="text-2xl font-bold text-gray-900">{displayPersonName}</h2>
-            <p className="text-blue-500 text-sm mt-1">Dental Treatment</p>
+            {isAdminRole ? (
+              <>
+                <p className="text-sm font-bold text-gray-500 mb-1">Dentist</p>
+                <h2 className="text-2xl font-bold text-gray-900">Dr. {dentistName}</h2>
+                <p className="text-sm font-bold text-gray-500 mt-2 mb-1">Patient</p>
+                <h3 className="text-xl font-bold text-gray-800">{patientName}</h3>
+                <p className="text-blue-500 text-sm mt-1">Dental Treatment</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-bold text-gray-500 mb-1">{isDentistRole ? "Patient" : "Dentist"}</p>
+                <h2 className="text-2xl font-bold text-gray-900">{isDentistRole ? patientName : dentistName}</h2>
+                <p className="text-blue-500 text-sm mt-1">Dental Treatment</p>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {isNew && (
@@ -201,7 +212,12 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
         <DialogContent className="flex flex-col gap-4 pt-4">
           
           <p className="text-sm text-gray-500 mb-2">
-            Date: {displayDate} · {isDentistRole ? `Patient: ${patientName}` : `Treated by: ${dentistName}`}
+            Date: {displayDate}
+            {isAdminRole && (
+              <> · Patient: {patientName} · Dentist: {dentistName}</>
+            )}
+            {isDentistRole && <> · Patient: {patientName}</>}
+            {!isAdminRole && !isDentistRole && <> · Treated by: {dentistName}</>}
           </p>
 
           <TextField
