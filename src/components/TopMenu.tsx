@@ -32,10 +32,11 @@ export default function TopMenu() {
       try {
         const data = await getMyRecords(token);
         const records: any[] = data.data || [];
-        const lastSeen = localStorage.getItem('recordsLastSeen');
+        const seenAt: Record<string, string> = JSON.parse(localStorage.getItem('recordsSeenAt') || '{}');
         const count = records.filter((rec) => {
-          if (!lastSeen) return true;
-          return rec.updatedAt && new Date(rec.updatedAt) > new Date(lastSeen);
+          const lastViewedAt = seenAt[rec._id];
+          if (!lastViewedAt) return true;
+          return rec.updatedAt && new Date(rec.updatedAt) > new Date(lastViewedAt);
         }).length;
         setRecordNotifCount(count);
       } catch {
@@ -46,12 +47,12 @@ export default function TopMenu() {
 
     window.addEventListener('storage', checkAuth);
     window.addEventListener('authChange', checkAuth);
-    window.addEventListener('recordsViewed', () => setRecordNotifCount(0));
-    
+    window.addEventListener('recordsViewed', fetchNotifCount);
+
     return () => {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
-      window.removeEventListener('recordsViewed', () => setRecordNotifCount(0));
+      window.removeEventListener('recordsViewed', fetchNotifCount);
     };
   }, []);
 

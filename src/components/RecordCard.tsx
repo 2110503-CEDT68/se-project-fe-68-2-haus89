@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Alert } from "@mui/material";
 import updateRecord from '../libs/updateRecord';
 import deleteRecord from '../libs/admin/deleteRecord';
@@ -25,10 +25,31 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
   const [successOpen, setSuccessOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isNew, setIsNew] = useState(false);
+
+  useEffect(() => {
+    if (userRole !== 'user' || !record._id) return;
+    const seenAt: Record<string, string> = JSON.parse(localStorage.getItem('recordsSeenAt') || '{}');
+    const lastViewedAt = seenAt[record._id];
+    if (!lastViewedAt) {
+      setIsNew(true);
+    } else if (record.updatedAt && new Date(record.updatedAt) > new Date(lastViewedAt)) {
+      setIsNew(true);
+    }
+  }, [record._id, record.updatedAt, userRole]);
 
   if (!record) return null;
 
-  const handleOpenDetails = () => setDetailsOpen(true);
+  const handleOpenDetails = () => {
+    setDetailsOpen(true);
+    if (isNew) {
+      const seenAt: Record<string, string> = JSON.parse(localStorage.getItem('recordsSeenAt') || '{}');
+      seenAt[record._id] = new Date().toISOString();
+      localStorage.setItem('recordsSeenAt', JSON.stringify(seenAt));
+      setIsNew(false);
+      window.dispatchEvent(new Event('recordsViewed'));
+    }
+  };
   const handleCloseDetails = () => setDetailsOpen(false);
   
   const showEditButton = userRole === 'dentist';
@@ -117,9 +138,14 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
             <h2 className="text-2xl font-bold text-gray-900">{displayPersonName}</h2>
             <p className="text-blue-500 text-sm mt-1">Dental Treatment</p>
           </div>
-          <span className="bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-            COMPLETED
-          </span>
+          <div className="flex items-center gap-2">
+            {isNew && (
+              <span className="w-3 h-3 rounded-full bg-red-500 inline-block" title="Updated" />
+            )}
+            <span className="bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              COMPLETED
+            </span>
+          </div>
         </div>
 
         <hr className="my-4 border-gray-100" />

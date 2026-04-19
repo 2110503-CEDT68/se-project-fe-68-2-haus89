@@ -41,8 +41,6 @@ export default function MyRecordsPage() {
     };
 
     loadRecords();
-    localStorage.setItem('recordsLastSeen', new Date().toISOString());
-    window.dispatchEvent(new Event('recordsViewed'));
   }, [router]);
 
   return (
