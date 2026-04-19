@@ -136,7 +136,7 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
             {isAdminRole ? (
               <>
                 <p className="text-sm font-bold text-gray-500 mb-1">Dentist</p>
-                <h2 className="text-2xl font-bold text-gray-900">Dr. {dentistName}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{dentistName}</h2>
                 <p className="text-sm font-bold text-gray-500 mt-2 mb-1">Patient</p>
                 <h3 className="text-xl font-bold text-gray-800">{patientName}</h3>
                 <p className="text-blue-500 text-sm mt-1">Dental Treatment</p>
