@@ -3,14 +3,16 @@
 import React, { useState } from 'react';
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Alert } from "@mui/material";
 import updateRecord from '../libs/updateRecord';
+import deleteRecord from '../libs/admin/deleteRecord';
 
 interface RecordCardProps {
   record: any;
   userRole?: string;
   onRecordUpdated?: () => void;
+  onRecordDeleted?: () => void;
 }
 
-export default function RecordCard({ record, userRole, onRecordUpdated }: RecordCardProps) {
+export default function RecordCard({ record, userRole, onRecordUpdated, onRecordDeleted }: RecordCardProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editDiagnosis, setEditDiagnosis] = useState("");
@@ -20,14 +22,31 @@ export default function RecordCard({ record, userRole, onRecordUpdated }: Record
   const [editDentistNote, setEditDentistNote] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   if (!record) return null;
 
   const handleOpenDetails = () => setDetailsOpen(true);
   const handleCloseDetails = () => setDetailsOpen(false);
   
-  // Show edit button only for dentist
   const showEditButton = userRole === 'dentist';
+  const showDeleteButton = userRole === 'admin';
+
+  const handleDeleteConfirm = async () => {
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("token")!;
+      await deleteRecord(token, record._id);
+      setDeleteConfirmOpen(false);
+      if (onRecordDeleted) onRecordDeleted();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete record");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const recordDate = record.createdAt || record.date; 
   const displayDate = recordDate 
@@ -78,6 +97,7 @@ export default function RecordCard({ record, userRole, onRecordUpdated }: Record
       });
 
       setEditModalOpen(false);
+      setSuccessOpen(true);
       if (onRecordUpdated) {
         onRecordUpdated();
       }
@@ -107,6 +127,11 @@ export default function RecordCard({ record, userRole, onRecordUpdated }: Record
         <div className="mb-6">
           <p className="text-sm font-bold text-gray-500 mb-1">Treatment Date</p>
           <p className="text-lg text-gray-800">{displayDate}</p>
+          {record.updatedAt && (
+            <p className="text-xs text-gray-400 mt-1">
+              Last updated: {new Date(record.updatedAt).toLocaleString('th-TH')}
+            </p>
+          )}
         </div>
 
         <Button 
@@ -120,14 +145,25 @@ export default function RecordCard({ record, userRole, onRecordUpdated }: Record
         </Button>
 
         {showEditButton && (
-          <Button 
-            variant="outlined" 
-            color="primary" 
+          <Button
+            variant="outlined"
+            color="primary"
             fullWidth
             onClick={handleEditClick}
             sx={{ borderRadius: '8px', padding: '8px 0', marginTop: '12px' }}
           >
             EDIT
+          </Button>
+        )}
+        {showDeleteButton && (
+          <Button
+            variant="outlined"
+            color="error"
+            fullWidth
+            onClick={() => setDeleteConfirmOpen(true)}
+            sx={{ borderRadius: '8px', padding: '8px 0', marginTop: '12px' }}
+          >
+            DELETE
           </Button>
         )}
       </div>
@@ -276,6 +312,33 @@ export default function RecordCard({ record, userRole, onRecordUpdated }: Record
             sx={{ minWidth: "100px" }}
           >
             {editSaving ? <CircularProgress size={24} /> : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: '#dc2626' }}>Delete Record</DialogTitle>
+        <DialogContent>
+          <p className="text-gray-600">Are you sure you want to delete this record?</p>
+          <p className="text-red-500 text-sm font-bold mt-3">This action cannot be undone.</p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setDeleteConfirmOpen(false)} color="inherit" disabled={deleting}>
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} variant="contained" color="error" disabled={deleting}>
+            {deleting ? 'Deleting...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={successOpen} onClose={() => setSuccessOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle className="font-bold text-gray-800">Record Updated</DialogTitle>
+        <DialogContent>
+          <p className="text-gray-600">The dental record has been updated successfully.</p>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setSuccessOpen(false)} variant="contained" color="primary">
+            OK
           </Button>
         </DialogActions>
       </Dialog>
