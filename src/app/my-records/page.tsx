@@ -41,6 +41,8 @@ export default function MyRecordsPage() {
     };
 
     loadRecords();
+    localStorage.setItem('recordsLastSeen', new Date().toISOString());
+    window.dispatchEvent(new Event('recordsViewed'));
   }, [router]);
 
   return (
@@ -58,11 +60,12 @@ export default function MyRecordsPage() {
         ) : records && records.length > 0 ? (
           <div className="space-y-4">
             {records.map((record: any, index: number) => (
-              <RecordCard 
-                key={record._id || index} 
+              <RecordCard
+                key={record._id || index}
                 record={record}
                 userRole={userRole}
                 onRecordUpdated={fetchMyRecords}
+                onRecordDeleted={fetchMyRecords}
               />
             ))}
           </div>
