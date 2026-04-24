@@ -2,14 +2,13 @@
 
 import React, { useState } from "react";
 import Rating from "@mui/material/Rating";
-import deleteReview from "../libs/deleteReview";
+import updateReview from "../libs/updateReview"; 
 
 interface Review {
   _id: string;
   rating: number;
   review: string;
-  dentist: string;
-  user: string;
+  userId: string;
   createdAt: string;
 }
 
@@ -21,22 +20,21 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ReviewModal({ dentistName, dentistId, currentUserId = "me", initialReviews = [], onClose }: Props) {
+export default function ReviewModal({ dentistName, currentUserId = "me", initialReviews = [], onClose }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
-  const alreadyReviewed = reviews.some(r => r.user === currentUserId);
+  const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
   const [rating, setRating] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
 
-  const handleDelete = async (reviewId: string) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editError, setEditError] = useState("");
+
+  const handleDelete = (reviewId: string) => {
     if (!window.confirm("Delete your review?")) return;
-    try {
-      const token = localStorage.getItem("token") || "";
-      await deleteReview(token, reviewId);
-      setReviews(prev => prev.filter(x => x._id !== reviewId));
-    } catch (e: any) {
-      setError("Failed to delete review.");
-    }
+    setReviews(prev => prev.filter(x => x._id !== reviewId));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -45,13 +43,50 @@ export default function ReviewModal({ dentistName, dentistId, currentUserId = "m
     if (!text.trim()) { setError("Please write a review."); return; }
     const createdAt = new Date().toISOString();
 
-    console.log(rating, text.trim(), currentUserId, createdAt);
-  
-    // TODO: Implement the post review instead of setReviews 
-    setReviews(prev => [{ _id: Date.now().toString(), rating, review: text.trim(), user: currentUserId, dentist: dentistId, createdAt }, ...prev]);
+    setReviews(prev => [{ _id: Date.now().toString(), rating, review: text.trim(), userId: currentUserId, createdAt }, ...prev]);
     setRating(null); 
     setText(""); 
     setError("");
+  };
+
+  const handleStartEdit = (r: Review) => {
+    setEditingId(r._id);
+    setEditRating(r.rating);
+    setEditText(r.review);
+    setEditError("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditRating(null);
+    setEditText("");
+  };
+
+  const handleSaveEdit = async (reviewId: string) => {
+    if (!editRating) { setEditError("Please select a rating."); return; }
+    if (!editText.trim()) { setEditError("Please write a review."); return; }
+
+    try {
+      const token = localStorage.getItem("token");
+      const isMongoId = /^[0-9a-fA-F]{24}$/.test(reviewId);
+
+      if (token && isMongoId) {
+        await updateReview(token, reviewId, editRating, editText.trim());
+      }
+
+      setReviews(prev => 
+        prev.map(r => r._id === reviewId ? { 
+          ...r, 
+          rating: editRating, 
+          review: editText.trim(),
+          createdAt: new Date().toISOString() 
+        } : r)
+      );
+
+      setEditingId(null); 
+    } catch (err: any) {
+      setEditError(err.message || "Failed to update review.");
+    }
   };
 
   return (
@@ -67,9 +102,9 @@ export default function ReviewModal({ dentistName, dentistId, currentUserId = "m
         </div>
 
         <div className="flex flex-col flex-1 min-h-0 px-5 py-4 gap-4">
-          {alreadyReviewed ? (
+          {alreadyReviewed && !editingId ? (
             <p className="text-sm text-gray-400 text-center py-2">You have already reviewed this dentist.</p>
-          ) : (
+          ) : !alreadyReviewed && (
             <form onSubmit={handleSubmit} className="space-y-2">
               <Rating precision={0.5} value={rating} onChange={(_, v) => { setRating(v); setError(""); }} size="large" />
               <textarea
@@ -91,25 +126,57 @@ export default function ReviewModal({ dentistName, dentistId, currentUserId = "m
 
           {reviews.length > 0 && <hr className="border-gray-100" />}
 
-          <div className="overflow-y-auto flex-1 min-h-0">
+          <div className="overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
           {reviews.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-2">No reviews yet.</p>
           ) : (
             <div className="space-y-3">
               {reviews.map((r) => (
                 <div key={r._id} className="bg-gray-50 rounded-lg p-3 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <Rating value={r.rating} precision={0.5} readOnly size="small" />
-                    <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
-                  </div>
-                  <p className="text-sm text-gray-700">{r.review}</p>
-                  {r.user === currentUserId && (
-                    <button
-                      onClick={() => handleDelete(r._id)}
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
+                  
+                  {editingId === r._id ? (
+                    <div className="space-y-2 bg-white p-3 rounded border border-blue-100 shadow-sm">
+                      <p className="text-xs font-bold text-blue-800 mb-1">Edit Your Review</p>
+                      <Rating precision={0.5} value={editRating} onChange={(_, v) => { setEditRating(v); setEditError(""); }} size="small" />
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value.slice(0, 500))}
+                        rows={3}
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-700 resize-none focus:outline-none focus:border-blue-500"
+                      />
+                      <div className="flex justify-between items-center">
+                        {editError ? <span className="text-xs text-red-500">{editError}</span> : <span />}
+                        <div className="space-x-2">
+                          <button onClick={handleCancelEdit} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">Cancel</button>
+                          <button onClick={() => handleSaveEdit(r._id)} className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700">Save</button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <Rating value={r.rating} precision={0.5} readOnly size="small" />
+                        <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{r.review}</p>
+                      
+                      {r.userId === currentUserId && (
+                        <div className="flex justify-end gap-3 pt-1">
+                          <button
+                            onClick={() => handleStartEdit(r)}
+                            className="text-xs font-semibold text-blue-500 hover:text-blue-700 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(r._id)}
+                            className="text-xs font-semibold text-red-400 hover:text-red-600 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))}
