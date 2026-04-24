@@ -3,14 +3,16 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import getMyRecords from "../../libs/getMyRecords"; 
-import RecordCard from "../../components/RecordCard"; 
+import getMyRecords from "../../libs/getMyRecords";
+import RecordCard from "../../components/RecordCard";
+import getUserById from "../../libs/getUserById"; 
 
 export default function MyRecordsPage() {
   const router = useRouter();
   const [records, setRecords] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<string>("");
 
   const fetchMyRecords = async () => {
     try {
@@ -21,7 +23,46 @@ export default function MyRecordsPage() {
       }
 
       const data = await getMyRecords(token);
-      setRecords(data.data || []);
+      const recordsData = data.data || [];
+      
+      // Enrich records with patient and dentist names
+      if (recordsData.length > 0) {
+        const userIds = new Set<string>();
+        recordsData.forEach((record: any) => {
+          if (record.patient && typeof record.patient === 'string') userIds.add(record.patient);
+          if (record.dentist && typeof record.dentist === 'string') userIds.add(record.dentist);
+        });
+
+        // Fetch all user names in parallel
+        const userMap = new Map<string, any>();
+        await Promise.all(
+          Array.from(userIds).map(async (userId) => {
+            try {
+              const userData = await getUserById(token, userId);
+              userMap.set(userId, userData.data || userData);
+            } catch (error) {
+              console.error(`Failed to fetch user ${userId}:`, error);
+              userMap.set(userId, { name: 'Unknown' });
+            }
+          })
+        );
+
+        // Add names to records
+        const enrichedRecords = recordsData.map((record: any) => ({
+          ...record,
+          patient: typeof record.patient === 'string' 
+            ? userMap.get(record.patient) || { name: 'Unknown Patient' }
+            : record.patient,
+          dentist: typeof record.dentist === 'string'
+            ? userMap.get(record.dentist) || { name: 'Unknown Dentist' }
+            : record.dentist
+        }));
+
+        setRecords(enrichedRecords);
+      } else {
+        setRecords(recordsData);
+      }
+      
       setError("");
     } catch (err: any) {
       setError("Unable to fetch your dental records at the moment.");
@@ -32,6 +73,9 @@ export default function MyRecordsPage() {
   useEffect(() => {
     const loadRecords = async () => {
       setLoading(true);
+      // Get user role from localStorage
+      const role = localStorage.getItem("role") || "";
+      setUserRole(role);
       await fetchMyRecords();
       setLoading(false);
     };
@@ -54,7 +98,13 @@ export default function MyRecordsPage() {
         ) : records && records.length > 0 ? (
           <div className="space-y-4">
             {records.map((record: any, index: number) => (
-              <RecordCard key={record._id || index} record={record} />
+              <RecordCard
+                key={record._id || index}
+                record={record}
+                userRole={userRole}
+                onRecordUpdated={fetchMyRecords}
+                onRecordDeleted={fetchMyRecords}
+              />
             ))}
           </div>
         ) : (

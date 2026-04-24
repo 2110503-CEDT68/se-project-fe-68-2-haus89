@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import getMyRecords from '../libs/getMyRecords';
 
 export default function TopMenu() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function TopMenu() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDentist, setIsDentist] = useState(false);
   const [role, setRole] = useState('');
+  const [recordNotifCount, setRecordNotifCount] = useState(0);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -23,12 +25,34 @@ export default function TopMenu() {
     
     checkAuth();
 
+    const fetchNotifCount = async () => {
+      const token = localStorage.getItem('token');
+      const r = localStorage.getItem('role') || '';
+      if (!token || r !== 'user') return;
+      try {
+        const data = await getMyRecords(token);
+        const records: any[] = data.data || [];
+        const seenAt: Record<string, string> = JSON.parse(localStorage.getItem('recordsSeenAt') || '{}');
+        const count = records.filter((rec) => {
+          const lastViewedAt = seenAt[rec._id];
+          if (!lastViewedAt) return true;
+          return rec.updatedAt && new Date(rec.updatedAt) > new Date(lastViewedAt);
+        }).length;
+        setRecordNotifCount(count);
+      } catch {
+        // ignore
+      }
+    };
+    fetchNotifCount();
+
     window.addEventListener('storage', checkAuth);
     window.addEventListener('authChange', checkAuth);
-    
+    window.addEventListener('recordsViewed', fetchNotifCount);
+
     return () => {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
+      window.removeEventListener('recordsViewed', fetchNotifCount);
     };
   }, []);
 
@@ -64,8 +88,13 @@ export default function TopMenu() {
             
             {isLoggedIn ? (
               <>
-                <Link href="/my-records" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
+                <Link href="/my-records" className="relative text-gray-600 hover:text-blue-600 font-medium transition-colors">
                   My Records
+                  {recordNotifCount > 0 && (
+                    <span className="absolute -top-2 -right-4 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {recordNotifCount}
+                    </span>
+                  )}
                 </Link>
                 <Link href="/my-booking" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">
                   My Booking

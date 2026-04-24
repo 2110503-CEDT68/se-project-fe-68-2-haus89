@@ -8,6 +8,8 @@ import getDentist from '../../../libs/getDentist';
 import addDentistSlot from '../../../libs/admin/addDentistSlot';
 import deleteDentistSlot from '../../../libs/admin/deleteDentistSlot';
 import createRecord from '../../../libs/admin/createRecord';
+import getUserById from '../../../libs/getUserById';
+import getMyRecords from '../../../libs/getMyRecords';
 
 interface Slot {
   _id: string;
@@ -16,7 +18,8 @@ interface Slot {
   endTime: string;
   isBooked: boolean;
   bookedBy?: string;    
-  bookingId?: string;   
+  bookingId?: string;
+  patientName?: string;
 }
 
 interface RecordForm {
@@ -27,6 +30,12 @@ interface RecordForm {
   dentistNote: string;
 }
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const offset = today.getTimezoneOffset() * 60000;
+  return new Date(today.getTime() - offset).toISOString().split("T")[0];
+};
+
 export default function DentistSlotsPage() {
   const router = useRouter();
   const [dentist, setDentist] = useState<any>(null);
@@ -36,6 +45,7 @@ export default function DentistSlotsPage() {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [saving, setSaving] = useState(false);
+  const [recordedBookingIds, setRecordedBookingIds] = useState<Set<string>>(new Set());
 
 
   // Record modal state
@@ -47,6 +57,7 @@ export default function DentistSlotsPage() {
     followUpDate: '',
     dentistNote: '',
   });
+  const minFollowUpDate = getTodayDateString();
 
   const fetchDentist = async () => {
     try {
@@ -59,7 +70,48 @@ export default function DentistSlotsPage() {
       const me = await getMe(token);
       const id = me.data?._id || me._id;
       const data = await getDentist(id, token);
-      setDentist(data.data);
+      
+      // Enrich slots with patient names
+      const dentistData = data.data;
+      if (dentistData?.availableSlots) {
+        const bookedSlots = dentistData.availableSlots.filter((slot: Slot) => slot.isBooked && slot.bookedBy);
+        const patientIds = new Set(bookedSlots.map((slot: Slot) => slot.bookedBy));
+        
+        // Fetch patient names
+        const patientMap = new Map<string, string>();
+        await Promise.all(
+          Array.from(patientIds).map(async (patientId) => {
+            try {
+              const userData = await getUserById(token, patientId as string);
+              patientMap.set(patientId as string, userData.data?.name || userData.name || 'Unknown');
+            } catch (error) {
+              console.error(`Failed to fetch patient ${patientId}:`, error);
+              patientMap.set(patientId as string, 'Unknown');
+            }
+          })
+        );
+        
+        // Add patient names to slots
+        dentistData.availableSlots = dentistData.availableSlots.map((slot: Slot) => ({
+          ...slot,
+          patientName: slot.bookedBy ? patientMap.get(slot.bookedBy) : undefined
+        }));
+      }
+      
+      setDentist(dentistData);
+
+      // Fetch existing records to know which slots already have one
+      try {
+        const records = await getMyRecords(token);
+        const ids = new Set<string>(
+          (records.data || records)
+            .filter((r: any) => r.booking)
+            .map((r: any) => typeof r.booking === 'object' ? r.booking._id : r.booking)
+        );
+        setRecordedBookingIds(ids);
+      } catch {
+        // non-fatal
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load profile');
     } finally {
@@ -109,6 +161,12 @@ export default function DentistSlotsPage() {
 
   const handleCreateRecord = async () => {
     if (!recordSlot || !dentist || !recordSlot.bookedBy) return;
+
+    if (recordForm.followUpDate && recordForm.followUpDate < minFollowUpDate) {
+      alert('Follow-up date cannot be in the past');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token')!;
 
@@ -124,6 +182,9 @@ export default function DentistSlotsPage() {
       });
 
       alert('Record created!');
+      if (recordSlot.bookingId) {
+        setRecordedBookingIds(prev => new Set(prev).add(recordSlot.bookingId!));
+      }
       setRecordSlot(null);
     } catch (err: any) {
       alert(err.message || 'Failed to create record');
@@ -152,21 +213,26 @@ export default function DentistSlotsPage() {
             <ul className="space-y-3 max-h-72 overflow-y-auto">
               {dentist.availableSlots.map((slot: Slot) => (
                 <li key={slot._id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-bold text-gray-700 text-sm">{new Date(slot.date).toLocaleDateString()}</p>
                     <p className="text-gray-600 text-sm">{slot.startTime} – {slot.endTime}</p>
+                    {slot.isBooked && slot.patientName && (
+                      <p className="text-blue-600 text-xs font-semibold mt-1">Patient: {slot.patientName}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold px-2 py-1 rounded-full ${slot.isBooked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                       {slot.isBooked ? 'Booked' : 'Available'}
                     </span>
                     {slot.isBooked && (
-                      <button
-                        onClick={() => openRecordModal(slot)}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded border border-blue-200"
-                      >
-                        + Record
-                      </button>
+                      slot.bookingId && recordedBookingIds.has(slot.bookingId)
+                        ? <span className="text-xs font-bold text-green-600 px-2 py-1 rounded border border-green-200 bg-green-50">Recorded</span>
+                        : <button
+                            onClick={() => openRecordModal(slot)}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded border border-blue-200"
+                          >
+                            + Record
+                          </button>
                     )}
                     <button
                       onClick={() => handleDeleteSlot(slot._id, slot.isBooked)}
@@ -235,9 +301,14 @@ export default function DentistSlotsPage() {
         <DialogTitle className="font-bold">Create Treatment Record</DialogTitle>
         <DialogContent className="flex flex-col gap-4 pt-4">
           {recordSlot && (
-            <p className="text-sm text-gray-500 mb-2">
-              Slot: {new Date(recordSlot.date).toLocaleDateString()} · {recordSlot.startTime} – {recordSlot.endTime}
-            </p>
+            <div className="bg-blue-50 p-3 rounded-lg mb-2">
+              <p className="text-sm text-gray-700 font-semibold">
+                Patient: {recordSlot.patientName || 'Unknown'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Slot: {new Date(recordSlot.date).toLocaleDateString()} · {recordSlot.startTime} – {recordSlot.endTime}
+              </p>
+            </div>
           )}
           <TextField
             label="Diagnosis"
@@ -271,6 +342,7 @@ export default function DentistSlotsPage() {
             InputLabelProps={{ shrink: true }}
             value={recordForm.followUpDate}
             onChange={(e) => setRecordForm(f => ({ ...f, followUpDate: e.target.value }))}
+            inputProps={{ min: minFollowUpDate }}
             size="small"
             fullWidth
           />
