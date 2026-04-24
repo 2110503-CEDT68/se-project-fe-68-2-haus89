@@ -12,6 +12,12 @@ interface RecordCardProps {
   onRecordDeleted?: () => void;
 }
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const offset = today.getTimezoneOffset() * 60000;
+  return new Date(today.getTime() - offset).toISOString().split("T")[0];
+};
+
 export default function RecordCard({ record, userRole, onRecordUpdated, onRecordDeleted }: RecordCardProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -26,6 +32,7 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [isNew, setIsNew] = useState(false);
+  const minFollowUpDate = getTodayDateString();
 
   useEffect(() => {
     if (userRole !== 'user' || !record._id) return;
@@ -104,6 +111,12 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
 
   const handleEditSave = async () => {
     setEditError("");
+
+    if (editFollowUpDate && editFollowUpDate < minFollowUpDate) {
+      setEditError("Follow-up date cannot be in the past");
+      return;
+    }
+
     setEditSaving(true);
 
     try {
@@ -326,6 +339,7 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
             type="date"
             value={editFollowUpDate}
             onChange={(e) => setEditFollowUpDate(e.target.value)}
+            inputProps={{ min: minFollowUpDate }}
             InputLabelProps={{ shrink: true }}
             size="small"
             fullWidth

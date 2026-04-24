@@ -30,6 +30,12 @@ interface RecordForm {
   dentistNote: string;
 }
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const offset = today.getTimezoneOffset() * 60000;
+  return new Date(today.getTime() - offset).toISOString().split("T")[0];
+};
+
 export default function DentistSlotsPage() {
   const router = useRouter();
   const [dentist, setDentist] = useState<any>(null);
@@ -51,6 +57,7 @@ export default function DentistSlotsPage() {
     followUpDate: '',
     dentistNote: '',
   });
+  const minFollowUpDate = getTodayDateString();
 
   const fetchDentist = async () => {
     try {
@@ -154,6 +161,12 @@ export default function DentistSlotsPage() {
 
   const handleCreateRecord = async () => {
     if (!recordSlot || !dentist || !recordSlot.bookedBy) return;
+
+    if (recordForm.followUpDate && recordForm.followUpDate < minFollowUpDate) {
+      alert('Follow-up date cannot be in the past');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token')!;
 
@@ -329,6 +342,7 @@ export default function DentistSlotsPage() {
             InputLabelProps={{ shrink: true }}
             value={recordForm.followUpDate}
             onChange={(e) => setRecordForm(f => ({ ...f, followUpDate: e.target.value }))}
+            inputProps={{ min: minFollowUpDate }}
             size="small"
             fullWidth
           />
