@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Dialog } from "@mui/material";
 import getDentists from "../../libs/getDentists";
 import BookingForm from "../../components/BookingForm";
+import ReviewModal from "../../components/ReviewModal";
 
 export default function DentistsPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function DentistsPage() {
   const [error, setError] = useState("");
   const [selectedDentist, setSelectedDentist] = useState<any>(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [reviewDentist, setReviewDentist] = useState<any>(null);
 
   useEffect(() => {
       const fetchDentists = async () => {
@@ -88,14 +90,20 @@ export default function DentistsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {dentists.map((dentist) => (
               <div key={dentist._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <h2 className="text-xl font-bold text-blue-900 mb-2">{dentist.name}</h2>
+                <div className="flex items-start justify-between mb-2">
+                  <h2 className="text-xl font-bold text-blue-900">{dentist.name}</h2>
+                  <button
+                    onClick={() => setReviewDentist(dentist)}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2 transition-colors ml-2 mt-1"
+                  >★ Reviews</button>
+                </div>
                 
                 <div className="text-gray-600 text-sm mb-4 space-y-1">
                   <p><span className="font-bold">Expertise:</span> {dentist.areaOfExpertise}</p>
                   <p><span className="font-bold">Experience:</span> {dentist.yearsOfExperience} years</p>
                 </div>
                 
-                <button 
+                <button
                   onClick={() => handleBookingClick(dentist)}
                   className="w-full bg-blue-50 text-blue-700 font-bold py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
                 >
@@ -136,6 +144,14 @@ export default function DentistsPage() {
           </div>
         )}
       </Dialog>
+
+      {reviewDentist && (
+        <ReviewModal
+          dentistName={reviewDentist.name}
+          dentistId={reviewDentist._id}
+          onClose={() => setReviewDentist(null)}
+        />
+      )}
     </main>
   );
 }
