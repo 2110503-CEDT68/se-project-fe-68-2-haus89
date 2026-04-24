@@ -67,6 +67,7 @@ export default function RecordCard({ record, userRole, onRecordUpdated, onRecord
     try {
       const token = localStorage.getItem("token")!;
       await deleteRecord(token, record._id);
+      alert("Record deleted successfully");
       setDeleteConfirmOpen(false);
       if (onRecordDeleted) onRecordDeleted();
     } catch (err: any) {
