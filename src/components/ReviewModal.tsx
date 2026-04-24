@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import Rating from "@mui/material/Rating";
+import deleteReview from "../libs/deleteReview";
 
 interface Review {
   _id: string;
   rating: number;
   review: string;
-  userId: string;
+  dentist: string;
+  user: string;
   createdAt: string;
 }
 
@@ -19,16 +21,22 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ReviewModal({ dentistName, currentUserId = "me", initialReviews = [], onClose }: Props) {
+export default function ReviewModal({ dentistName, dentistId, currentUserId = "me", initialReviews = [], onClose }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
-  const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
+  const alreadyReviewed = reviews.some(r => r.user === currentUserId);
   const [rating, setRating] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
 
-  const handleDelete = (reviewId: string) => {
+  const handleDelete = async (reviewId: string) => {
     if (!window.confirm("Delete your review?")) return;
-    setReviews(prev => prev.filter(x => x._id !== reviewId));
+    try {
+      const token = localStorage.getItem("token") || "";
+      await deleteReview(token, reviewId);
+      setReviews(prev => prev.filter(x => x._id !== reviewId));
+    } catch (e: any) {
+      setError("Failed to delete review.");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,8 +46,9 @@ export default function ReviewModal({ dentistName, currentUserId = "me", initial
     const createdAt = new Date().toISOString();
 
     console.log(rating, text.trim(), currentUserId, createdAt);
-
-    setReviews(prev => [{ _id: Date.now().toString(), rating, review: text.trim(), userId: currentUserId, createdAt }, ...prev]);
+  
+    // TODO: Implement the post review instead of setReviews 
+    setReviews(prev => [{ _id: Date.now().toString(), rating, review: text.trim(), user: currentUserId, dentist: dentistId, createdAt }, ...prev]);
     setRating(null); 
     setText(""); 
     setError("");
@@ -94,7 +103,7 @@ export default function ReviewModal({ dentistName, currentUserId = "me", initial
                     <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
                   <p className="text-sm text-gray-700">{r.review}</p>
-                  {r.userId === currentUserId && (
+                  {r.user === currentUserId && (
                     <button
                       onClick={() => handleDelete(r._id)}
                       className="text-xs text-red-400 hover:text-red-600 transition-colors"
