@@ -223,7 +223,11 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
             <p className="text-sm text-gray-400 text-center py-2">No reviews yet.</p>
           ) : (
             <div className="space-y-3">
-              {reviews.map((r) => (
+              {[...reviews].sort((a, b) => {
+                if (a.userId === activeUserId && b.userId !== activeUserId) return -1;
+                if (b.userId === activeUserId && a.userId !== activeUserId) return 1;
+                return 0;
+              }).map((r) => (
                 <div key={r._id} className="bg-gray-50 rounded-lg p-3 space-y-1">
                   
                   {editingId === r._id ? (
