@@ -30,11 +30,16 @@ interface Props {
 export default function ReviewModal({ dentistName, dentistId, averageRating = 0, totalReviews = 0, currentUserId = "me", initialReviews = [], onClose, onReviewSubmitted }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
 
   useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("token"));
+  }, []);
+
+  useEffect(() => {
+    if (!dentistId) { setLoadingReviews(false); return; }
     const token = localStorage.getItem("token");
-    if (!token || !dentistId) { setLoadingReviews(false); return; }
     setLoadingReviews(true);
     getDentistReviews(token, dentistId)
       .then((res) => {
@@ -148,7 +153,9 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
         </div>
 
         <div className="flex flex-col flex-1 min-h-0 px-5 py-4 gap-4">
-          {alreadyReviewed && !editingId ? (
+          {!isLoggedIn ? (
+            <p className="text-sm text-gray-400 text-center py-2">Please login to write a review.</p>
+          ) : alreadyReviewed && !editingId ? (
             <p className="text-sm text-gray-400 text-center py-2">You have already reviewed this dentist.</p>
           ) : !alreadyReviewed && (
             <form onSubmit={handleSubmit} className="space-y-2">

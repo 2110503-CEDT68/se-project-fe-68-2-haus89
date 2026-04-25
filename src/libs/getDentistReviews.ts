@@ -1,8 +1,6 @@
-export default async function getDentistReviews(token: string, dentistId: string) {
+export default async function getDentistReviews(token: string | null, dentistId: string) {
     const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/reviews/dentist/${dentistId}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
     if (!response.ok) {
