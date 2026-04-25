@@ -1,10 +1,12 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Rating from "@mui/material/Rating";
+import CircularProgress from "@mui/material/CircularProgress";
 import updateReview from "../libs/updateReview";
 import addReview from "../libs/addReview";
-import deleteReview from "../libs/deleteReview"; 
+import deleteReview from "../libs/deleteReview";
+import getDentistReviews from "../libs/getDentistReviews";
 
 interface Review {
   _id: string;
@@ -26,7 +28,27 @@ interface Props {
 
 export default function ReviewModal({ dentistName, dentistId, averageRating = 0, totalReviews = 0, currentUserId = "me", initialReviews = [], onClose }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [loadingReviews, setLoadingReviews] = useState(true);
   const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || !dentistId) { setLoadingReviews(false); return; }
+    setLoadingReviews(true);
+    getDentistReviews(token, dentistId)
+      .then((res) => {
+        const list = (res.data || []).map((r: any) => ({
+          _id: r._id,
+          rating: r.rating,
+          review: r.review,
+          userId: typeof r.user === "object" ? r.user?._id : r.user,
+          createdAt: r.createdAt,
+        }));
+        setReviews(list);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingReviews(false));
+  }, [dentistId]);
   const [rating, setRating] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
@@ -149,7 +171,12 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
           {reviews.length > 0 && <hr className="border-gray-100" />}
 
           <div className="overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
-          {reviews.length === 0 ? (
+          {loadingReviews ? (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-400">
+              <CircularProgress size={14} thickness={5} />
+              <span>Loading reviews...</span>
+            </div>
+          ) : reviews.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-2">No reviews yet.</p>
           ) : (
             <div className="space-y-3">
