@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import Rating from "@mui/material/Rating";
-import updateReview from "../libs/updateReview"; 
+import updateReview from "../libs/updateReview";
+import addReview from "../libs/addReview";
+import deleteReview from "../libs/deleteReview"; 
 
 interface Review {
   _id: string;
@@ -37,17 +39,26 @@ export default function ReviewModal({ dentistName, currentUserId = "me", initial
     setReviews(prev => prev.filter(x => x._id !== reviewId));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!rating) { setError("Please select a rating."); return; }
-    if (!text.trim()) { setError("Please write a review."); return; }
-    const createdAt = new Date().toISOString();
-
-    setReviews(prev => [{ _id: Date.now().toString(), rating, review: text.trim(), userId: currentUserId, createdAt }, ...prev]);
-    setRating(null); 
-    setText(""); 
-    setError("");
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!rating) { setError("Please select a rating."); return; }
+      if (!text.trim()) { setError("Please write a review."); return; }
+  
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Please login first");
+  
+        const response = await addReview(dentistId, token, rating, text.trim());
+        
+        setReviews(prev => [response.data, ...prev]);
+        
+        setRating(null); 
+        setText(""); 
+        setError("");
+      } catch (err: any) {
+        setError(err.message || "Failed to submit review");
+      }
+    };
 
   const handleStartEdit = (r: Review) => {
     setEditingId(r._id);
