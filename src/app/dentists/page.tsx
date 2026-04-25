@@ -18,20 +18,19 @@ export default function DentistsPage() {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [reviewDentist, setReviewDentist] = useState<any>(null);
 
-  useEffect(() => {
-      const fetchDentists = async () => {
-        try {
-          const data = await getDentists(); 
-          
-          const dentistsArray = data.data?.dentists || data.data || [];
-          setDentists(dentistsArray);
-        } catch (err) {
-          setError("Unable to fetch data");
-        } finally {
-        setLoading(false); 
-      }
-    };
+  const fetchDentists = async () => {
+    try {
+      const data = await getDentists();
+      const dentistsArray = data.data?.dentists || data.data || [];
+      setDentists(dentistsArray);
+    } catch (err) {
+      setError("Unable to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDentists();
   }, [router]);
 
@@ -154,15 +153,19 @@ export default function DentistsPage() {
         )}
       </Dialog>
 
-      {reviewDentist && (
+      {reviewDentist && (() => {
+        const current = dentists.find(d => d._id === reviewDentist._id) || reviewDentist;
+        return (
         <ReviewModal
-          dentistName={reviewDentist.name}
-          dentistId={reviewDentist._id}
-          averageRating={reviewDentist.averageRating}
-          totalReviews={reviewDentist.totalReviews}
+          dentistName={current.name}
+          dentistId={current._id}
+          averageRating={current.averageRating}
+          totalReviews={current.totalReviews}
           onClose={() => setReviewDentist(null)}
+          onReviewSubmitted={fetchDentists}
         />
-      )}
+        );
+      })()}
     </main>
   );
 }

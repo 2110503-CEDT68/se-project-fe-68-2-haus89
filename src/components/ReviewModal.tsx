@@ -24,9 +24,10 @@ interface Props {
   currentUserId?: string;
   initialReviews?: Review[];
   onClose: () => void;
+  onReviewSubmitted?: () => void;
 }
 
-export default function ReviewModal({ dentistName, dentistId, averageRating = 0, totalReviews = 0, currentUserId = "me", initialReviews = [], onClose }: Props) {
+export default function ReviewModal({ dentistName, dentistId, averageRating = 0, totalReviews = 0, currentUserId = "me", initialReviews = [], onClose, onReviewSubmitted }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
@@ -75,10 +76,11 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
         const response = await addReview(dentistId, token, rating, text.trim());
         
         setReviews(prev => [response.data, ...prev]);
-        
-        setRating(null); 
-        setText(""); 
+
+        setRating(null);
+        setText("");
         setError("");
+        onReviewSubmitted?.();
       } catch (err: any) {
         setError(err.message || "Failed to submit review");
       }
