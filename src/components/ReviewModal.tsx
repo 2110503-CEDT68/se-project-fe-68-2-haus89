@@ -22,7 +22,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ReviewModal({ dentistName, currentUserId = "me", initialReviews = [], onClose }: Props) {
+export default function ReviewModal({ dentistName, dentistId, currentUserId = "me", initialReviews = [], onClose }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
   const [rating, setRating] = useState<number | null>(null);
