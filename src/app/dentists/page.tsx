@@ -91,7 +91,16 @@ export default function DentistsPage() {
             {dentists.map((dentist) => (
               <div key={dentist._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-2">
-                  <h2 className="text-xl font-bold text-blue-900">{dentist.name}</h2>
+                  <div>
+                    <h2 className="text-xl font-bold text-blue-900">{dentist.name}</h2>
+                    {dentist.totalReviews > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+                        <span className="text-yellow-500">★</span>
+                        <span className="font-semibold">{dentist.averageRating?.toFixed(1)}</span>
+                        <span className="text-gray-400">({dentist.totalReviews})</span>
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => setReviewDentist(dentist)}
                     className="text-xs font-medium text-blue-600 hover:text-blue-800 underline underline-offset-2 transition-colors ml-2 mt-1"
@@ -149,6 +158,8 @@ export default function DentistsPage() {
         <ReviewModal
           dentistName={reviewDentist.name}
           dentistId={reviewDentist._id}
+          averageRating={reviewDentist.averageRating}
+          totalReviews={reviewDentist.totalReviews}
           onClose={() => setReviewDentist(null)}
         />
       )}

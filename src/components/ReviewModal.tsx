@@ -17,12 +17,14 @@ interface Review {
 interface Props {
   dentistName: string;
   dentistId: string;
+  averageRating?: number;
+  totalReviews?: number;
   currentUserId?: string;
   initialReviews?: Review[];
   onClose: () => void;
 }
 
-export default function ReviewModal({ dentistName, dentistId, currentUserId = "me", initialReviews = [], onClose }: Props) {
+export default function ReviewModal({ dentistName, dentistId, averageRating = 0, totalReviews = 0, currentUserId = "me", initialReviews = [], onClose }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
   const [rating, setRating] = useState<number | null>(null);
@@ -107,7 +109,16 @@ export default function ReviewModal({ dentistName, dentistId, currentUserId = "m
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
             <h2 className="text-base font-bold text-blue-900">Reviews</h2>
-            <p className="text-xl text-gray-400">{dentistName}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xl text-gray-400">{dentistName}</p>
+              {totalReviews > 0 && (
+                <span className="flex items-center gap-1 text-sm text-gray-500">
+                  <span className="text-yellow-500">★</span>
+                  <span className="font-semibold">{averageRating.toFixed(1)}</span>
+                  <span className="text-gray-400">({totalReviews})</span>
+                </span>
+              )}
+            </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
