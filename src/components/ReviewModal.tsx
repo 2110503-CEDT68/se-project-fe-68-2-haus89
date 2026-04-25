@@ -27,15 +27,28 @@ interface Props {
   onReviewSubmitted?: () => void;
 }
 
-export default function ReviewModal({ dentistName, dentistId, averageRating = 0, totalReviews = 0, currentUserId = "me", initialReviews = [], onClose, onReviewSubmitted }: Props) {
+export default function ReviewModal({ dentistName, dentistId, averageRating = 0, totalReviews = 0, currentUserId, initialReviews = [], onClose, onReviewSubmitted }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const alreadyReviewed = reviews.some(r => r.userId === currentUserId);
+  
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("token"));
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setLoggedInUserId(payload.id);
+      } catch (err) {
+        console.error("Invalid token format");
+      }
+    }
   }, []);
+
+  const activeUserId = loggedInUserId || currentUserId;
+  const alreadyReviewed = reviews.some(r => r.userId === activeUserId);
 
   useEffect(() => {
     if (!dentistId) { setLoadingReviews(false); return; }
@@ -55,6 +68,7 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
       .catch(() => {})
       .finally(() => setLoadingReviews(false));
   }, [dentistId]);
+
   const [rating, setRating] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
@@ -64,9 +78,23 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
   const [editText, setEditText] = useState("");
   const [editError, setEditError] = useState("");
 
-  const handleDelete = (reviewId: string) => {
-    if (!window.confirm("Delete your review?")) return;
-    setReviews(prev => prev.filter(x => x._id !== reviewId));
+  const handleDelete = async (reviewId: string) => {
+    if (!window.confirm("Are you sure you want to delete your review?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const isMongoId = /^[0-9a-fA-F]{24}$/.test(reviewId);
+
+      if (token && isMongoId) {
+        await deleteReview(token, reviewId); 
+      }
+
+      setReviews(prev => prev.filter(x => x._id !== reviewId));
+      onReviewSubmitted?.();
+
+    } catch (err: any) {
+      alert(err.message || "Failed to delete review.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +108,12 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
   
         const response = await addReview(dentistId, token, rating, text.trim());
         
-        setReviews(prev => [response.data, ...prev]);
+        const newReview = {
+          ...response.data,
+          userId: activeUserId 
+        };
+
+        setReviews(prev => [newReview, ...prev]);
 
         setRating(null);
         setText("");
@@ -126,6 +159,7 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
       );
 
       setEditingId(null); 
+      onReviewSubmitted?.();
     } catch (err: any) {
       setEditError(err.message || "Failed to update review.");
     }
@@ -234,7 +268,7 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
                       </div>
                       <p className="text-sm text-gray-700">{r.review}</p>
                       
-                      {r.userId === currentUserId && (
+                      {r.userId === activeUserId && (
                         <div className="flex justify-end gap-3 pt-1">
                           <button
                             onClick={() => handleStartEdit(r)}
