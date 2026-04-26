@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.use({ storageState: 'tests/user.json' });
 
-test('us4', async ({ page }) => {
+test('us4-delete-review', async ({ page }) => {
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Dentists' }).click();
   await page.getByRole('button', { name: '★ Reviews' }).first().click();

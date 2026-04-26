@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.use({ storageState: 'tests/user.json' });
 
-test('us2', async ({ page }) => {
+test('us2-view-reviews', async ({ page }) => {
       await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Dentists' }).click();
   await expect(page.getByRole('main')).toBeVisible();
