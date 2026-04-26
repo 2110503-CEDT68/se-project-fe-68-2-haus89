@@ -15,7 +15,9 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  
+  const [agreedToPolicy, setAgreedToPolicy] = useState(false);
+  const [showPolicy, setShowPolicy] = useState(false);
+
   const [redirectUrl, setRedirectUrl] = useState("");
 
   useEffect(() => {
@@ -117,10 +119,33 @@ export default function RegisterPage() {
             inputProps={{ minLength: 6 }} 
           />
 
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="privacy-policy"
+              required
+              checked={agreedToPolicy}
+              onChange={(e) => setAgreedToPolicy(e.target.checked)}
+              className="mt-1 h-4 w-4 cursor-pointer accent-blue-600"
+            />
+            <label htmlFor="privacy-policy" className="text-sm text-gray-600 leading-snug">
+              I agree to the{" "}
+              <button
+                type="button"
+                onClick={() => setShowPolicy(true)}
+                className="text-blue-600 font-medium underline hover:text-blue-800"
+              >
+                Privacy Policy
+              </button>{" "}
+              and consent to the collection and use of my personal data for dental appointment services.
+            </label>
+          </div>
+
           <Button
             type="submit"
             variant="contained"
-            className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-none"
+            disabled={!agreedToPolicy}
+            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-none disabled:opacity-50"
             fullWidth
           >
             Register
@@ -136,6 +161,43 @@ export default function RegisterPage() {
         </p>
       </div>
 
+      {showPolicy && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-800">Privacy Policy</h2>
+              <button
+                onClick={() => setShowPolicy(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto text-sm text-gray-600 space-y-4">
+              <p><strong>Last updated:</strong> April 2026</p>
+              <p>By registering, you agree to the collection and use of your personal information as described below.</p>
+              <h3 className="font-semibold text-gray-800">1. Information We Collect</h3>
+              <p>We collect your name, email address, and phone number to create and manage your account and dental appointments.</p>
+              <h3 className="font-semibold text-gray-800">2. How We Use Your Data</h3>
+              <p>Your data is used solely for scheduling dental appointments, sending reminders, and managing your records within this platform.</p>
+              <h3 className="font-semibold text-gray-800">3. Data Sharing</h3>
+              <p>We do not sell or share your personal data with third parties except as required to operate the service (e.g., your assigned dentist).</p>
+              <h3 className="font-semibold text-gray-800">4. Data Retention</h3>
+              <p>Your data is retained for as long as your account is active. You may request deletion at any time by contacting support.</p>
+              <h3 className="font-semibold text-gray-800">5. Your Rights</h3>
+              <p>You have the right to access, correct, or delete your personal data. Contact us at support@realhaus89.com for any requests.</p>
+            </div>
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={() => setShowPolicy(false)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
