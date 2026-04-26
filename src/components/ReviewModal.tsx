@@ -230,6 +230,9 @@ export default function ReviewModal({ dentistName, dentistId, averageRating = 0,
               }).map((r) => (
                 <div key={r._id} className="bg-gray-50 rounded-lg p-3 space-y-1">
                   
+                  {r.userId === activeUserId && editingId !== r._id && (
+                    <span className="text-xs font-semibold text-blue-500">Your review</span>
+                  )}
                   {editingId === r._id ? (
                       <div className="space-y-2 py-1">
                         <Rating 
