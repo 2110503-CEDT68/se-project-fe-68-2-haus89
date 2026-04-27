@@ -1,0 +1,39 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build:
+      context: ../se-project-be-68-2-haus89
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    env_file:
+      - ../se-project-be-68-2-haus89/config/config.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/DentistQ
+    ports:
+      - "5003:5003"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:5003
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:5003
+    ports:
+      - "3000:3000"
+
+volumes:
+  mongo-data:
