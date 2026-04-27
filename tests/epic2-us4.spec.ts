@@ -10,6 +10,7 @@ test('us4-delete-review', async ({ page }) => {
     console.log(`Dialog message: ${dialog.message()}`);
     dialog.accept().catch(() => {});
   });
+  await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
   await page.getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
 });
